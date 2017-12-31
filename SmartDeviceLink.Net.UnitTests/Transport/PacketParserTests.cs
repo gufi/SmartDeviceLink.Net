@@ -21,36 +21,143 @@ namespace SmartDeviceLink.Net.UnitTests.Transport
             _parser = new ProxyPacketParser((packet) => _packets.Add(packet));
             _packets = new List<TransportPacket>();
         }
+
+        [Test]
+        public void FirstFrameV1PacketTest()
+        {
+            int version = 1;
+            int frameType = (byte)FrameType.First;
+            byte serviceType = 1;
+            byte frameInfoType = 0;
+            byte sessionId = 1;
+            int message = 2;
+            var data = Encoding.ASCII.GetBytes("HelloWor");
+            RunParser(GeneratePacket(version, frameType, serviceType, frameInfoType, sessionId, message, data));
+
+            Assert.IsTrue(_packets.Count == 1);
+            var packet = _packets.First();
+            AssertPacket(packet, version, frameType, serviceType, frameInfoType, data);
+        }
+
         [Test]
         public void HelloWorldPacketTest()
         {
+            int version = 1;
+            int frameType = 1;
+            byte serviceType = 1;
+            byte frameInfoType = 0;
+            byte sessionId = 1;
+            int message = 2;
             var data = Encoding.ASCII.GetBytes("Hello World");
-            RunParser(GeneratePacket(1,1,1,0,1,2,data));
+            RunParser(GeneratePacket(version,frameType,serviceType,frameInfoType,sessionId,message,data));
             
             Assert.IsTrue(_packets.Count == 1);
             var packet = _packets.First();
-            Assert.AreEqual(packet.Version,1);
-            Assert.AreEqual((byte)packet.FrameType, 1);
-            Assert.AreEqual((byte)packet.ControlFrameInfo, 0);
-            Assert.AreEqual(packet.DataSize, data.Length);
+            AssertPacket(packet, version, frameType, serviceType, frameInfoType, data);
         }
+        
+        [Test]
+        public void HelloWorldPacketTestv2()
+        {
+            int version = 2;
+            int frameType = (byte)FrameType.TypeControl;
+            byte serviceType = 99;
+            byte frameInfoType = (byte)FrameInfo.HeartBeatAck;
+            byte sessionId = 100;
+            int message = 200;
+            var data = Encoding.ASCII.GetBytes("Hello World");
+            RunParser(GeneratePacket(version, frameType, serviceType, frameInfoType, sessionId, message, data));
+
+            Assert.IsTrue(_packets.Count == 1);
+            var packet = _packets.First();
+            AssertPacket(packet, version, frameType, serviceType, frameInfoType, data);
+        }
+
+        [Test]
+        public void PacketTestNoData()
+        {
+            int version = 2;
+            int frameType = (byte)FrameType.TypeControl;
+            byte serviceType = 99;
+            byte frameInfoType = (byte)FrameInfo.HeartBeatAck;
+            byte sessionId = 100;
+            int message = 200;
+            byte[] data = null;
+            RunParser(GeneratePacket(version, frameType, serviceType, frameInfoType, sessionId, message, data));
+
+            Assert.IsTrue(_packets.Count == 1);
+            var packet = _packets.First();
+            AssertPacket(packet, version, frameType, serviceType, frameInfoType, data);
+        }
+
+        [Test]
+        public void MultiplePacketsSingleArray()
+        {
+            int version = 2;
+            int frameType = (byte)FrameType.TypeControl;
+            byte serviceType = 99;
+            byte frameInfoType = 0;
+            byte sessionId = 100;
+            int message = 200;
+            var data = Encoding.ASCII.GetBytes("Hello World");
+            List<byte> dataList = new List<byte>();
+            for (int i = 0; i < 10; i++)
+            {
+                dataList.AddRange(GeneratePacket(i%2+1, frameType, serviceType, frameInfoType, sessionId, message,(i%3 == 0)? data:null));
+            }
+
+            RunParser(dataList.ToArray());
+
+            Assert.IsTrue(_packets.Count == 10);
+            Assert.AreEqual(_packets.Count(x => x.Version ==1),5);
+            Assert.AreEqual(_packets.Count(x => x.DataSize > 0), 4);
+        }
+
+        [Test]
+        public void PacketInvalid()
+        {
+            int version = 1;
+            int frameType = (byte)FrameType.Single;
+            byte serviceType = 99;
+            byte frameInfoType = (byte)FrameInfo.HeartBeatAck;// frame info for single must be 0
+            byte sessionId = 100;
+            int message = 200;
+            var data = Encoding.ASCII.GetBytes("Hello World");
+            RunParser(GeneratePacket(version, frameType, serviceType, frameInfoType, sessionId, message, data));
+
+            Assert.IsTrue(_packets.Count == 0);
+        }
+
 
         private  void RunParser(byte[] bytes)
         {
             foreach(var b in bytes) _parser.HandleByte(b);
         }
 
+        private static void AssertPacket(TransportPacket packet, int version, int frameType, byte serviceType,
+            byte frameInfoType, byte[] data)
+        {
+            Assert.AreEqual(packet.Version, version);
+            Assert.AreEqual((byte)packet.FrameType, frameType);
+            Assert.AreEqual(packet.ServiceType, serviceType);
+            Assert.AreEqual((byte)packet.ControlFrameInfo, frameInfoType);
+            Assert.AreEqual(packet.DataSize, data?.Length ?? 0);
+        }
+
         private static byte[] GeneratePacket(int version, int frameType, byte serviceType, byte frameInfoType,
             byte sessionId, int message, byte[] databytes)
         {
-            var dataSize =
-                databytes.Length +
-                4 + // data size
-                1 + //version + frameType
-                1 + // service Type
-                1 + // frameInfo Type
-                1; //sessionId
-            if (version > 1) dataSize +=4; // message
+            var dataSize = 0;
+            if (databytes != null)
+            {
+                dataSize += databytes.Length;
+            }
+            dataSize +=     4 + // data size
+                            1 + //version + frameType
+                            1 + // service Type
+                            1 + // frameInfo Type
+                            1; //sessionId
+            if (version > 1) dataSize +=4; // message   
             var packetBytes = new byte[dataSize];
             byte versionAndFrameType = (byte) ((version << 4) | frameType);
             packetBytes[0] = versionAndFrameType;
@@ -58,11 +165,13 @@ namespace SmartDeviceLink.Net.UnitTests.Transport
             packetBytes[2] = frameInfoType;
             packetBytes[3] = sessionId;
 
-            packetBytes[4] = (byte)(databytes.Length >> 24);
-            packetBytes[5] = (byte)(databytes.Length >> 16);
-            packetBytes[6] = (byte)(databytes.Length >> 8);
-            packetBytes[7] = (byte)databytes.Length;
-
+            if (databytes != null)
+            {
+                packetBytes[4] = (byte) (databytes.Length >> 24);
+                packetBytes[5] = (byte) (databytes.Length >> 16);
+                packetBytes[6] = (byte) (databytes.Length >> 8);
+                packetBytes[7] = (byte) databytes.Length;
+            }
             var byteI = 8;
 
             if (version != 1)
@@ -72,12 +181,13 @@ namespace SmartDeviceLink.Net.UnitTests.Transport
                 packetBytes[byteI] = (byte)(message >> 8); byteI++;
                 packetBytes[byteI] = (byte)message; byteI++;
             }
-
-            for (int i = 0; i < databytes.Length; i++)
+            if (databytes != null)
             {
-                packetBytes[byteI + i] = databytes[i];
+                for (int i = 0; i < databytes.Length; i++)
+                {
+                    packetBytes[byteI + i] = databytes[i];
+                }
             }
-
             return packetBytes;
         }
     }

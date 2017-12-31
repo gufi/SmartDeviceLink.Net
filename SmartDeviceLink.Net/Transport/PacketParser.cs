@@ -167,17 +167,17 @@ namespace SmartDeviceLink.Net.Transport
 
         protected virtual void Message1State(byte data)
         {
-            packet.MessageId = data >> 24;
+            packet.MessageId = data << 24;
             ByteHandler = Message2State;
         }
         protected virtual void Message2State(byte data)
         {
-            packet.MessageId |= data >> 16;
+            packet.MessageId |= data << 16;
             ByteHandler = Message3State;
         }
         protected virtual void Message3State(byte data)
         {
-            packet.MessageId |= data >> 8;
+            packet.MessageId |= data << 8;
             ByteHandler = Message4State;
         }
         protected virtual void Message4State(byte data)
@@ -186,6 +186,7 @@ namespace SmartDeviceLink.Net.Transport
             if (packet.DataSize == 0)
             {
                 HandlePacket();
+                return;
             }
             // sdl_android creates payload buffer here, but that was handled in data size 4
             ByteHandler = DataPumpState;
