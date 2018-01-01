@@ -9,7 +9,7 @@ namespace SmartDeviceLink.Net.UnitTests.Transport
 {
     public class ProxyPacketParser : PacketParser
     {
-        public ProxyPacketParser(Action<TransportPacket> packetHandler) : base(packetHandler)
+        public ProxyPacketParser(Action<IncomingTransportPacket> packetHandler) : base(packetHandler)
         {
         }
 

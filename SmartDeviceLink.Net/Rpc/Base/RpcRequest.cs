@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
+using Newtonsoft.Json;
+using SmartDeviceLink.Net.Protocol.Enums;
 
 namespace SmartDeviceLink.Net.Rpc.Base
 {
@@ -12,9 +13,17 @@ namespace SmartDeviceLink.Net.Rpc.Base
 
     public class RpcRequest
     {
-        public int Id { get; set; }
+        [JsonIgnore]
+        public FunctionID Id { get; set; }
+        public string FunctionName { get { return Id.ToString(); } }
         public int AppId { get; set; }
         public string JsonRpc { get; set; }
         public string Method { get; set; }
+        public bool IsPayloadProtected { get; set; }
+        public int CorrelationId { get; set; }
+
+        [JsonIgnore]
+        public byte[] BulkData { get; set; }
+
     }
 }

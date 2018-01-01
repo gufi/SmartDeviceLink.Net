@@ -14,7 +14,7 @@ namespace SmartDeviceLink.Net.Transport
     /// </summary>
     public class PacketParser : IPacketParser
     {
-        private readonly Action<TransportPacket> _packetHandler;
+        private readonly Action<IncomingTransportPacket> _packetHandler;
         private static readonly byte FIRST_FRAME_DATA_SIZE = 0x08;
         private static readonly int VERSION_MASK = 0xF0; //4 highest bits
         private static readonly int COMPRESSION_MASK = 0x08; //4th lowest bit
@@ -25,8 +25,8 @@ namespace SmartDeviceLink.Net.Transport
         private static readonly int V1_HEADER_SIZE = WiProProtocol.V1_HEADER_SIZE;
         private static readonly int V2_HEADER_SIZE = WiProProtocol.V2_HEADER_SIZE;
 
-        private TransportPacket packet;
-        public PacketParser(Action<TransportPacket> packetHandler)
+        private IncomingTransportPacket packet;
+        public PacketParser(Action<IncomingTransportPacket> packetHandler)
         {
             _packetHandler = packetHandler;
             ByteHandler = StartState;
@@ -46,7 +46,7 @@ namespace SmartDeviceLink.Net.Transport
 
         protected virtual void StartState(byte data)
         {
-            packet = new TransportPacket();
+            packet = new IncomingTransportPacket();
             packet.Version = (data & VERSION_MASK) >> 4;
             if (packet.Version < 1 || packet.Version > 5) return;
             //var compression = (data & COMPRESSION_MASK) > 0; // sdl_android doesnt use this?
@@ -58,7 +58,7 @@ namespace SmartDeviceLink.Net.Transport
 
         protected virtual void ServiceTypeState(byte data)
         {
-            packet.ServiceType = data & 0xFF;
+            packet.ServiceType = (byte)(data & 0xFF);
             ByteHandler = ControlFrameInfoState;
         }
 
@@ -98,7 +98,7 @@ namespace SmartDeviceLink.Net.Transport
 
         protected virtual void SessionIdState(byte data)
         {
-            packet.SessionId = data & 0xFF;
+            packet.SessionId = (byte)(data & 0xFF);
             ByteHandler = DataSize1State;
         }
 
