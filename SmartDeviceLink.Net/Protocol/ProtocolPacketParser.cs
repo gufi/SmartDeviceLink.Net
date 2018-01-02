@@ -1,20 +1,22 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using SmartDeviceLink.Net.Protocol;
+using SmartDeviceLink.Net.Logging;
+using SmartDeviceLink.Net.Protocol.Enums;
+using SmartDeviceLink.Net.Transport;
 using SmartDeviceLink.Net.Transport.Enums;
+using SmartDeviceLink.Net.Transport.Interfaces;
 
-namespace SmartDeviceLink.Net.Transport
+namespace SmartDeviceLink.Net.Protocol
 {
     /// <summary>
-    /// PacketParser is a State Machine
+    /// ProtocolPacketParser is a State Machine
     /// as each byte comes in the state is upgraded based on the byte being processed
     /// each current state is defined by the ByteHandler property
     /// once a packet is considered completed HandlePacket() is called which calls the passed in action to the ctor
     /// </summary>
-    public class PacketParser : IPacketParser
+    public class ProtocolPacketParser : IPacketParser
     {
-        private readonly Action<IncomingTransportPacket> _packetHandler;
+        private ILogger _logger => Logger.SdlLogger;
+        private readonly Action<TransportPacket> _packetHandler;
         private static readonly byte FIRST_FRAME_DATA_SIZE = 0x08;
         private static readonly int VERSION_MASK = 0xF0; //4 highest bits
         private static readonly int COMPRESSION_MASK = 0x08; //4th lowest bit
@@ -25,8 +27,8 @@ namespace SmartDeviceLink.Net.Transport
         private static readonly int V1_HEADER_SIZE = WiProProtocol.V1_HEADER_SIZE;
         private static readonly int V2_HEADER_SIZE = WiProProtocol.V2_HEADER_SIZE;
 
-        private IncomingTransportPacket packet;
-        public PacketParser(Action<IncomingTransportPacket> packetHandler)
+        private TransportPacket packet;
+        public ProtocolPacketParser(Action<TransportPacket> packetHandler)
         {
             _packetHandler = packetHandler;
             ByteHandler = StartState;
@@ -46,20 +48,30 @@ namespace SmartDeviceLink.Net.Transport
 
         protected virtual void StartState(byte data)
         {
-            packet = new IncomingTransportPacket();
+            packet = new TransportPacket();
             packet.Version = (data & VERSION_MASK) >> 4;
-            if (packet.Version < 1 || packet.Version > 5) return;
+            if (packet.Version < 1 || packet.Version > 5)
+            {
+                _logger.LogError("Packet Version Invalid" + packet.Version);
+                return;
+            }
             //var compression = (data & COMPRESSION_MASK) > 0; // sdl_android doesnt use this?
             var frameType = (byte)(data & FRAME_TYPE_MASK);
-            if (!Enum.IsDefined(typeof(FrameType), frameType)) return;
+            if (!Enum.IsDefined(typeof(FrameType), frameType))
+            {
+                _logger.LogError("FrameType undefined " + frameType);
+                return;
+            }
             packet.FrameType = (FrameType)frameType;
+            _logger.LogVerbose($"Version: {packet.Version} Frame Type: { packet.FrameType}");
             ByteHandler = ServiceTypeState;
         }
 
         protected virtual void ServiceTypeState(byte data)
         {
-            packet.ServiceType = (byte)(data & 0xFF);
+            packet.ServiceType = (SessionType)(data & 0xFF);
             ByteHandler = ControlFrameInfoState;
+            _logger.LogVerbose($"Service Type: {packet.ServiceType}");
         }
 
         protected virtual void ControlFrameInfoState(byte data)
@@ -91,6 +103,7 @@ namespace SmartDeviceLink.Net.Transport
             else
             {
                 ByteHandler = StartState;
+                _logger.LogError("Invalid Frame Info Type: " + data);
                 return;
             }
             ByteHandler = SessionIdState;
@@ -123,7 +136,7 @@ namespace SmartDeviceLink.Net.Transport
         protected virtual void DataSize4State(byte data)
         {
             packet.DataSize |= data;
-
+            _logger.LogVerbose("DataSize: " + packet.DataSize);
             switch (packet.FrameType)
             {
                 case FrameType.Consecutive:
@@ -190,6 +203,7 @@ namespace SmartDeviceLink.Net.Transport
             }
             // sdl_android creates payload buffer here, but that was handled in data size 4
             ByteHandler = DataPumpState;
+            _logger.LogVerbose("MessageId: " + packet.MessageId);
         }
 
         protected virtual void DataPumpState(byte data)
@@ -197,6 +211,7 @@ namespace SmartDeviceLink.Net.Transport
             if (packet.DumpSize < packet.Payload.Length)
             {
                 packet.Payload[packet.DumpSize++] = data;
+                _logger.LogVerbose($"Recieved Byte {packet.DataSize} of {packet.Payload.Length}");
                 if(packet.DumpSize+1 == packet.Payload.Length)
                     HandlePacket();
             }

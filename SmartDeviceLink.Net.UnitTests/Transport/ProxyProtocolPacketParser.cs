@@ -3,13 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using SmartDeviceLink.Net.Protocol;
 using SmartDeviceLink.Net.Transport;
 
 namespace SmartDeviceLink.Net.UnitTests.Transport
 {
-    public class ProxyPacketParser : PacketParser
+    public class ProxyProtocolPacketParser : ProtocolPacketParser
     {
-        public ProxyPacketParser(Action<IncomingTransportPacket> packetHandler) : base(packetHandler)
+        public ProxyProtocolPacketParser(Action<TransportPacket> packetHandler) : base(packetHandler)
         {
         }
 

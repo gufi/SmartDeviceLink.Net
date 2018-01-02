@@ -58,7 +58,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Transport\PacketParserTests.cs" />
-    <Compile Include="Transport\ProxyPacketParser.cs" />
+    <Compile Include="Transport\ProxyProtocolPacketParser.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -5,69 +5,72 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using SmartDeviceLink.Net.Converters;
+using SmartDeviceLink.Net.Logging;
+using SmartDeviceLink.Net.Protocol;
 using SmartDeviceLink.Net.Transport.Interfaces;
 
 namespace SmartDeviceLink.Net.Transport
 {
-    public class TcpTransport : ITransport
+    public class TcpTransport : TransportBase
     {
+        private ILogger _logger => Logger.SdlLogger;
         private readonly string _endpoint;
         private readonly int _port;
-        private readonly Action<IncomingTransportPacket> _onRecievedPacket;
-        private readonly IPacketParser _parser;
-        private readonly CancellationTokenSource _cTok;
-        private readonly Task _recieveTask;
-
         private TcpClient _client = null;
-        private bool _isDisposed = false;
 
-        public TcpTransport(string endpoint,int port, Action<IncomingTransportPacket> onRecievedPacket)
+        public TcpTransport(string endpoint,int port, Action<TransportPacket> onRecievedPacket) :base(onRecievedPacket)
         {
             _endpoint = endpoint;
             _port = port;
-            _onRecievedPacket = onRecievedPacket;
-            _parser = new PacketParser(_onRecievedPacket);
             _client = new TcpClient();
-            _cTok = new CancellationTokenSource();
-            _recieveTask = Task.Run( () =>
-            {
-                while (!_cTok.IsCancellationRequested)
-                    if (_client != null && _client.Connected)
-                    {
-                        var stream = _client.GetStream();
-                        {
-                            var _byte = (byte)stream.ReadByte();
-                            _parser.HandleByte(_byte);
-                        }
-                    }
-            },_cTok.Token);
+            
         }
-        public Task ConnectAsync()
+        private Task ConnectAsync()
         {
             return _client.ConnectAsync(_endpoint,_port);
-
         }
 
-        public Task SendAsync(OutgoingTransportPacket packet)
+        public override async Task SendAsync(TransportPacket packet)
         {
-            if (_isDisposed) throw new ObjectDisposedException("Tcp Transport is disposed and cannot be used");
-            if (_client.Connected)
+            if (IsDisposed) throw new ObjectDisposedException("Tcp Transport is disposed and cannot be used");
+            if (!_client.Connected)
             {
-                var stream = _client.GetStream();
-                var bytes = packet.ToBytes();
-                return stream.WriteAsync(bytes, 0, bytes.Length);
+                _logger.LogVerbose($"Connecting to {_endpoint}:{_port}");
+                await ConnectAsync();
+                _logger.LogVerbose($"Connected to {_endpoint}:{_port}");
             }
-            return Task.FromResult(0);
+            
+            var stream = _client.GetStream();
+            var bytes = packet.ToBytes();
+            await stream.WriteAsync(bytes, 0, bytes.Length);
+            _logger.LogVerbose($"Sent {bytes.Length} to {_endpoint}:{_port}");
         }
-        public void Dispose()
+
+        public override bool IsConnected => _client?.Connected ?? false;
+
+        public override void Dispose()
         {
-            if (!_isDisposed && _client != null)
+            if ( _client != null)
             {
                 if(_client.Connected) _client.Dispose();
                 _client = null;
-                _cTok.Cancel();
             }
-            _isDisposed = true;
+            base.Dispose();
+        }
+
+        public override void RecieveBytes()
+        {
+            while (!IsDisposed)
+                if (_client != null && _client.Connected)
+                {
+                    var stream = _client.GetStream();
+                    {
+                        var _byte = (byte)stream.ReadByte();
+                        Parser.HandleByte(_byte);
+                    }
+                }
         }
     }
+    
 }

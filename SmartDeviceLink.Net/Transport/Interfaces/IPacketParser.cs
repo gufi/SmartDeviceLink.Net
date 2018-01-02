@@ -1,4 +1,4 @@
-﻿namespace SmartDeviceLink.Net.Transport
+﻿namespace SmartDeviceLink.Net.Transport.Interfaces
 {
     public interface IPacketParser
     {

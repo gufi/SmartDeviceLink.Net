@@ -12,11 +12,11 @@ namespace SmartDeviceLink.Net.Converters
         public static ProtocolMessage ToProtocolMessage(this RpcRequest request)
         {
             var protocolMessage = new ProtocolMessage();
-            
-            protocolMessage.Data = Encoding.Unicode.GetBytes(JsonConvert.SerializeObject(request));
+
+            protocolMessage.Payload = Encoding.Unicode.GetBytes(JsonConvert.SerializeObject(request));
             protocolMessage.MessageType = MessageType.Rpc;
             protocolMessage.SessionType = SessionType.Rpc;
-            protocolMessage.FunctionID = request.Id;
+            protocolMessage.FunctionId = request.Id;
             protocolMessage.IsPayloadProtected = request.IsPayloadProtected;
             protocolMessage.CorrelationId = request.CorrelationId;
             protocolMessage.BulkData = request.BulkData;

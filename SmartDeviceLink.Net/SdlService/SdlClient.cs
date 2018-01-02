@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Threading.Tasks;
 using SmartDeviceLink.Net.Converters;
+using SmartDeviceLink.Net.Exceptions;
+using SmartDeviceLink.Net.Logging;
+using SmartDeviceLink.Net.Protocol;
 using SmartDeviceLink.Net.Rpc.Base;
 using SmartDeviceLink.Net.Transport;
 using SmartDeviceLink.Net.Transport.Interfaces;
@@ -12,12 +15,35 @@ namespace SmartDeviceLink.Net.SdlService
     /// </summary>
     public class SdlClient : IDisposable
     {
+        private ILogger _logger => Logger.SdlLogger;
         private readonly ITransport _transport;
+        private readonly WiProProtocol _protocol;
+        private object _session = null;
         private bool isDisposed;
 
         public SdlClient(ITransport transport)
         {
             _transport = transport;
+            _protocol = new WiProProtocol();
+        }
+
+        public void StartSession()
+        {
+            _session = new object();
+        }
+
+        public async Task SendAsync(RpcRequest request)
+        {
+            if(_session == null)
+            { throw new SessionException("Session does not exist, StartSession() must be called prior to sending RpcRequests");}
+            var protocolMessage = request.ToProtocolMessage();
+            _logger.LogVerbose("Created Protocol Message",protocolMessage);
+            _logger.LogVerbose("Bytes: " + protocolMessage.JsonSize);
+            var transportPackets = _protocol.CreateTransportPackets(protocolMessage);
+            foreach (var pack in transportPackets)
+            {
+                await _transport.SendAsync(pack);
+            }
         }
 
         public void Dispose()
@@ -25,23 +51,6 @@ namespace SmartDeviceLink.Net.SdlService
             if (!isDisposed)
                 _transport.Dispose();
             isDisposed = true;
-        }
-
-        public Task SendAsync(RpcRequest request)
-        {
-            var protocolMessage = request.ToProtocolMessage();
-            protocolMessage.SessionID = 1; // This is a stub, this should be found from the eventual implementation of the session object
-            // Create Protocol Message
-            // line 1737 from SdlProxyBase
-            // WiProProtocol -> line 168
-            // then convert to OutgoingTransportPacket
-            var transportPacket = protocolMessage.ToOutgoingTransportPacket();
-            // now convert to byytes WiProProtocol -> line 168-199
-            var bytes = transportPacket.ToBytes();
-
-
-
-            return _transport.SendAsync(transportPacket);
         }
     }
 }

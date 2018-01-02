@@ -16,6 +16,10 @@ namespace SmartDeviceLink.Net.Rpc.Base
         [JsonIgnore]
         public FunctionID Id { get; set; }
         public string FunctionName { get { return Id.ToString(); } }
+        public int FunctionId
+        {
+            get { return (int)Id; }
+        }
         public int AppId { get; set; }
         public string JsonRpc { get; set; }
         public string Method { get; set; }

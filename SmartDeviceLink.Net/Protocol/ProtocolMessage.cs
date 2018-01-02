@@ -2,21 +2,15 @@
 using System.Collections.Generic;
 using System.Text;
 using SmartDeviceLink.Net.Protocol.Enums;
+using SmartDeviceLink.Net.Transport;
 
 namespace SmartDeviceLink.Net.Protocol
 {
-    public class ProtocolMessage
+    public class ProtocolMessage : OutgoingProtocolPacket
     {
-        public byte Version { get; set; }
-        public byte SessionID { get; set; }
-        public int CorrelationId { get; set; }
-        public byte[] Data { get; set; }
-        public byte[] BulkData { get; set; }
         public MessageType MessageType { get; set; }
         public SessionType SessionType { get; set; }
-        public byte RPCType { get; set; }
-        public FunctionID FunctionID { get; set; }
-        public int JsonSize => Data?.Length ?? 0;
+        public int JsonSize => Payload?.Length ?? 0;
         public bool IsPayloadProtected { get; set; }
         public int PriorityCoefficient { get; set; }
     }

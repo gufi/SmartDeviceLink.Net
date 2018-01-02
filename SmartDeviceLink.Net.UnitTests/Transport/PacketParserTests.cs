@@ -4,8 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using NUnit.Framework;
+using SmartDeviceLink.Net.Protocol;
 using SmartDeviceLink.Net.Transport;
 using SmartDeviceLink.Net.Transport.Enums;
+using SmartDeviceLink.Net.Transport.Interfaces;
 using Assert = Microsoft.VisualStudio.TestTools.UnitTesting.Assert;
 
 namespace SmartDeviceLink.Net.UnitTests.Transport
@@ -14,12 +16,12 @@ namespace SmartDeviceLink.Net.UnitTests.Transport
     public class PacketParserTests
     {
         private IPacketParser _parser;
-        private List<IncomingTransportPacket> _packets;
+        private List<TransportPacket> _packets;
         [SetUp]
         public void TestInit()
         {
-            _parser = new ProxyPacketParser((packet) => _packets.Add(packet));
-            _packets = new List<IncomingTransportPacket>();
+            _parser = new ProxyProtocolPacketParser((packet) => _packets.Add(packet));
+            _packets = new List<TransportPacket>();
         }
 
         [Test]
@@ -133,7 +135,7 @@ namespace SmartDeviceLink.Net.UnitTests.Transport
             foreach(var b in bytes) _parser.HandleByte(b);
         }
 
-        private static void AssertPacket(IncomingTransportPacket packet, int version, int frameType, byte serviceType,
+        private static void AssertPacket(TransportPacket packet, int version, int frameType, byte serviceType,
             byte frameInfoType, byte[] data)
         {
             Assert.AreEqual(packet.Version, version);
