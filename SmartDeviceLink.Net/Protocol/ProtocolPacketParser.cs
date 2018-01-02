@@ -212,7 +212,7 @@ namespace SmartDeviceLink.Net.Protocol
             {
                 packet.Payload[packet.DumpSize++] = data;
                 _logger.LogVerbose($"Recieved Byte {packet.DumpSize} of {packet.Payload.Length}");
-                if(packet.DumpSize+1 == packet.Payload.Length)
+                if(packet.DumpSize == packet.Payload.Length)
                     HandlePacket();
             }
         }

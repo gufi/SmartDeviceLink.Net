@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using NUnit.Framework;
 using SmartDeviceLink.Net.Protocol;
+using SmartDeviceLink.Net.Protocol.Enums;
 using SmartDeviceLink.Net.Transport;
 using SmartDeviceLink.Net.Transport.Enums;
 using SmartDeviceLink.Net.Transport.Interfaces;
@@ -140,7 +141,7 @@ namespace SmartDeviceLink.Net.UnitTests.Transport
         {
             Assert.AreEqual(packet.Version, version);
             Assert.AreEqual((byte)packet.FrameType, frameType);
-            Assert.AreEqual(packet.ServiceType, serviceType);
+            Assert.AreEqual(packet.ServiceType, (SessionType)serviceType);
             Assert.AreEqual((byte)packet.ControlFrameInfo, frameInfoType);
             Assert.AreEqual(packet.DataSize, data?.Length ?? 0);
         }
