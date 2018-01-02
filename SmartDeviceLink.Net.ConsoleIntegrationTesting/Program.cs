@@ -24,13 +24,9 @@ namespace SmartDeviceLink.Net.ConsoleIntegrationTesting
         static async Task MainAsync(string[] args)
         {
             var packets = new List<TransportPacket>();
-            using (var client = new SdlClient(new TcpTransport("m.sdl.tools", 5430, (packet) =>
+            using (var client = new SdlClient(new TcpTransport("m.sdl.tools", 5546)))
             {
-                packets.Add(packet);
-                Console.WriteLine("packet recieved");
-            })))
-            {
-                client.StartSession();
+                await client.StartSessionAsync(SessionType.Rpc);
                 Console.WriteLine("Connected");
                 var rpc = new RpcRequest<AllowDeviceToConnect>();
                 rpc.Id = FunctionID.Show;
@@ -42,7 +38,7 @@ namespace SmartDeviceLink.Net.ConsoleIntegrationTesting
                 char exit = 'a';
                 do
                 {
-                    await client.SendAsync(rpc);
+                    //await client.SendAsync(rpc);
                     exit = Console.ReadKey().KeyChar;
                 } while (exit != 'e');
             }

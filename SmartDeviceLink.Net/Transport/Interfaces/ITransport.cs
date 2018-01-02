@@ -9,5 +9,6 @@ namespace SmartDeviceLink.Net.Transport.Interfaces
     public interface ITransport : IDisposable
     {
         Task SendAsync(TransportPacket packet);
+        Action<TransportPacket> OnRecievedPacket { get; set; }
     }
 }

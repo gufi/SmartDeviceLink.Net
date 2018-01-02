@@ -34,12 +34,7 @@ namespace SmartDeviceLink.Net.Protocol
             var tPackets = new List<TransportPacket>();
             message.SessionId = 1; // This is a stub, this should be found from the eventual implementation of the session object
             message.Version = protocolVersion;
-            // Create Protocol Message
-            // line 1737 from SdlProxyBase
-            // WiProProtocol -> line 168
-            // then convert to OutgoingProtocolPacket
-            // now convert to byytes WiProProtocol -> line 168-199
-            var messageBytes = message.ToBytes();
+            var messageBytes = message.ToProtocolFrame();
             // for now secured data is not supported
 
             // data is not going to be processed in one of two ways
@@ -56,7 +51,7 @@ namespace SmartDeviceLink.Net.Protocol
             var transportPacket = new TransportPacket();
             transportPacket.MessageId = messageId;
             transportPacket.Version = protocolPacket.Version;
-            transportPacket.Encryption = false;
+            transportPacket.IsEncrypted = false;
             transportPacket.FrameType = FrameType.Single;
             transportPacket.ServiceType =  protocolPacket.SessionType;
             transportPacket.SessionId = protocolPacket.SessionId;

@@ -62,7 +62,7 @@ namespace SmartDeviceLink.Net.UnitTests.Transport
         public void HelloWorldPacketTestv2()
         {
             int version = 2;
-            int frameType = (byte)FrameType.TypeControl;
+            int frameType = (byte)FrameType.Control;
             byte serviceType = 99;
             byte frameInfoType = (byte)FrameInfo.HeartBeatAck;
             byte sessionId = 100;
@@ -79,7 +79,7 @@ namespace SmartDeviceLink.Net.UnitTests.Transport
         public void PacketTestNoData()
         {
             int version = 2;
-            int frameType = (byte)FrameType.TypeControl;
+            int frameType = (byte)FrameType.Control;
             byte serviceType = 99;
             byte frameInfoType = (byte)FrameInfo.HeartBeatAck;
             byte sessionId = 100;
@@ -95,7 +95,7 @@ namespace SmartDeviceLink.Net.UnitTests.Transport
         [Test]
         public void MultiplePacketsSingleArray()
         {
-            int frameType = (byte)FrameType.TypeControl;
+            int frameType = (byte)FrameType.Control;
             byte serviceType = 99;
             byte frameInfoType = 0;
             byte sessionId = 100;

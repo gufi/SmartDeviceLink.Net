@@ -15,16 +15,16 @@ namespace SmartDeviceLink.Net.ConsoleIntegrationTesting
         {
             Console.WriteLine(message);
             if (obj != null)
-                Console.WriteLine(JsonConvert.SerializeObject(obj));
+                Console.WriteLine("\t" + JsonConvert.SerializeObject(obj,Formatting.Indented));
         }
 
         public void LogError(string message, object obj = null, Exception e = null)
         {
             Console.WriteLine(message);
             if (obj != null)
-                Console.WriteLine(JsonConvert.SerializeObject(obj));
+                Console.WriteLine("\t" + JsonConvert.SerializeObject(obj, Formatting.Indented));
             if (e != null)
-                Console.WriteLine(e);
+                Console.WriteLine("\t"+e);
         }
     }
 }

@@ -19,7 +19,7 @@ namespace SmartDeviceLink.Net.Transport
         private readonly int _port;
         private TcpClient _client = null;
 
-        public TcpTransport(string endpoint,int port, Action<TransportPacket> onRecievedPacket) :base(onRecievedPacket)
+        public TcpTransport(string endpoint,int port) 
         {
             _endpoint = endpoint;
             _port = port;
@@ -42,7 +42,7 @@ namespace SmartDeviceLink.Net.Transport
             }
             
             var stream = _client.GetStream();
-            var bytes = packet.ToBytes();
+            var bytes = packet.ToTransportPacketFrame();
             await stream.WriteAsync(bytes, 0, bytes.Length);
             _logger.LogVerbose($"Sent {bytes.Length} to {_endpoint}:{_port}");
         }

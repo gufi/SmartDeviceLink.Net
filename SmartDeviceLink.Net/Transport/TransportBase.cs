@@ -12,29 +12,33 @@ namespace SmartDeviceLink.Net.Transport
     {
         private readonly CancellationTokenSource _cTok;
         private readonly Task _recieveTask;
-        private readonly Action<TransportPacket> _onRecievedPacket;
         protected IPacketParser Parser { get; }
 
         protected bool IsDisposed { get; private set; } = false;
 
-        public TransportBase(Action<TransportPacket> onRecievedPacket)
+        public TransportBase()
         {
-            _onRecievedPacket = onRecievedPacket;
             _cTok = new CancellationTokenSource();
-            Parser = new ProtocolPacketParser(_onRecievedPacket);
+            Parser = new ProtocolPacketParser(PacketRecieved);
             _recieveTask = Task.Run((Action)RecieveBytes, _cTok.Token); 
         }
 
-        
+        private void PacketRecieved(TransportPacket packet)
+        {
+            OnRecievedPacket?.Invoke(packet);
+        }
 
         public abstract void RecieveBytes();
         public abstract Task SendAsync(TransportPacket packet);
         public abstract bool IsConnected { get; }
+        public Action<TransportPacket> OnRecievedPacket { get; set; }
+
         public virtual void Dispose()
         {
             if (!IsDisposed)
             {
                 _cTok.Cancel();
+                OnRecievedPacket = null;
             }
             IsDisposed = true;
         }

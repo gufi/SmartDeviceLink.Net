@@ -55,7 +55,7 @@ namespace SmartDeviceLink.Net.Protocol
                 _logger.LogError("Packet Version Invalid" + packet.Version);
                 return;
             }
-            //var compression = (data & COMPRESSION_MASK) > 0; // sdl_android doesnt use this?
+            packet.IsEncrypted = (data & COMPRESSION_MASK) > 0; // sdl_android doesnt use this?
             var frameType = (byte)(data & FRAME_TYPE_MASK);
             if (!Enum.IsDefined(typeof(FrameType), frameType))
             {
@@ -80,7 +80,7 @@ namespace SmartDeviceLink.Net.Protocol
             {
                 case FrameType.Consecutive:
                     break;
-                case FrameType.TypeControl:
+                case FrameType.Control:
                     break;
                 case FrameType.First:
                 case FrameType.Single:
@@ -141,7 +141,7 @@ namespace SmartDeviceLink.Net.Protocol
             {
                 case FrameType.Consecutive:
                 case FrameType.Single:
-                case FrameType.TypeControl:
+                case FrameType.Control:
                     break;
                 case FrameType.First:
                     {
@@ -211,7 +211,7 @@ namespace SmartDeviceLink.Net.Protocol
             if (packet.DumpSize < packet.Payload.Length)
             {
                 packet.Payload[packet.DumpSize++] = data;
-                _logger.LogVerbose($"Recieved Byte {packet.DataSize} of {packet.Payload.Length}");
+                _logger.LogVerbose($"Recieved Byte {packet.DumpSize} of {packet.Payload.Length}");
                 if(packet.DumpSize+1 == packet.Payload.Length)
                     HandlePacket();
             }

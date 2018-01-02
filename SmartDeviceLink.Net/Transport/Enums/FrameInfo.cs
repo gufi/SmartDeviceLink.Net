@@ -6,9 +6,9 @@ namespace SmartDeviceLink.Net.Transport.Enums
     public enum FrameInfo : byte
     {
         Heartbeat_FinalConsecutiveFrame_Reserved = 0,
-        StartService = 1,
-        StartServiceAck = 2,
-        StartServiceNak = 3,
+        StartSession = 1,
+        StartSessionAck = 2,
+        StartSessionNak = 3,
         EndService = 4,
         EndServiceAck = 5,
         EndServiceNak = 6,

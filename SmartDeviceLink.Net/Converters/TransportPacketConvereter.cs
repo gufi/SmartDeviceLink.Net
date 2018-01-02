@@ -7,7 +7,7 @@ namespace SmartDeviceLink.Net.Converters
 {
     public static class TransportPacketConvereter
     {
-        public static byte[] ToBytes(this TransportPacket packet)
+        public static byte[] ToTransportPacketFrame(this TransportPacket packet)
         {
             return GeneratePacket(
                 packet.Version, 
@@ -16,11 +16,12 @@ namespace SmartDeviceLink.Net.Converters
                 packet.ControlFrameInfo,
                 packet.SessionId, 
                 packet.MessageId,
+                packet.IsEncrypted,
                 packet.Payload);
         }
 
         private static byte[] GeneratePacket(int version, FrameType frameType, SessionType serviceType, FrameInfo frameInfoType,
-            byte sessionId, int message, byte[] databytes)
+            byte sessionId, int message,bool isEncrypted, byte[] databytes)
         {
             var dataSize = 0;
             if (databytes != null)
@@ -36,6 +37,7 @@ namespace SmartDeviceLink.Net.Converters
             var packetBytes = new byte[dataSize];
             byte versionAndFrameType = (byte)((version << 4) | (byte)frameType);
             packetBytes[0] = versionAndFrameType;
+            if (isEncrypted) packetBytes[0] |= 0x8;
             packetBytes[1] = (byte)serviceType;
             packetBytes[2] = (byte)frameInfoType;
             packetBytes[3] = sessionId;

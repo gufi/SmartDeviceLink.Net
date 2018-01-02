@@ -4,11 +4,11 @@ using System.Text;
 
 namespace SmartDeviceLink.Net.Transport.Enums
 {
-    public enum FrameType : byte
+    public enum TransportType
     {
-        Control,
-        Single,
-        First,
-        Consecutive
+        Multiplex,
+        Bluetooth,
+        TCP,
+        USB
     }
 }
