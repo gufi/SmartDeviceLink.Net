@@ -9,7 +9,7 @@ using SmartDeviceLink.Net.Transport.Enums;
 
 namespace SmartDeviceLink.Net.Protocol
 {
-    public class WiProProtocol
+    public class WiProProtocolManager
     {
 
         private ILogger _logger => Logger.SdlLogger;
@@ -33,7 +33,6 @@ namespace SmartDeviceLink.Net.Protocol
         {
             var tPackets = new List<TransportPacket>();
             message.SessionId = 1; // This is a stub, this should be found from the eventual implementation of the session object
-            message.Version = protocolVersion;
             var messageBytes = message.ToProtocolFrame();
             // for now secured data is not supported
 

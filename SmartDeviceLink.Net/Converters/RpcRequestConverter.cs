@@ -13,7 +13,7 @@ namespace SmartDeviceLink.Net.Converters
         {
             var protocolMessage = new ProtocolMessage();
 
-            protocolMessage.Payload = Encoding.Unicode.GetBytes(JsonConvert.SerializeObject(request));
+            protocolMessage.Payload = Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(request));
             protocolMessage.MessageType = MessageType.Rpc;
             protocolMessage.SessionType = SessionType.Rpc;
             protocolMessage.FunctionId = request.Id;

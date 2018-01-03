@@ -22,10 +22,10 @@ namespace SmartDeviceLink.Net.Protocol
         private static readonly int COMPRESSION_MASK = 0x08; //4th lowest bit
         private static readonly int FRAME_TYPE_MASK = 0x07; //3 lowest bits
 
-        private static readonly int V1_V2_MTU_SIZE = WiProProtocol.V1_V2_MTU_SIZE;
-        private static readonly int V3_V4_MTU_SIZE = WiProProtocol.V3_V4_MTU_SIZE;
-        private static readonly int V1_HEADER_SIZE = WiProProtocol.V1_HEADER_SIZE;
-        private static readonly int V2_HEADER_SIZE = WiProProtocol.V2_HEADER_SIZE;
+        private static readonly int V1_V2_MTU_SIZE = WiProProtocolManager.V1_V2_MTU_SIZE;
+        private static readonly int V3_V4_MTU_SIZE = WiProProtocolManager.V3_V4_MTU_SIZE;
+        private static readonly int V1_HEADER_SIZE = WiProProtocolManager.V1_HEADER_SIZE;
+        private static readonly int V2_HEADER_SIZE = WiProProtocolManager.V2_HEADER_SIZE;
 
         private TransportPacket packet;
         public ProtocolPacketParser(Action<TransportPacket> packetHandler)

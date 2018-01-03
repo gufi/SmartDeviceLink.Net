@@ -25,10 +25,10 @@ namespace SmartDeviceLink.Net.Converters
             int firstBytes = (int) message.FunctionId;
             firstBytes &= 0xFFFFFFF;
             firstBytes |= message.RpcType << 24;
-            Array.ConstrainedCopy(BitConverter.GetBytes(firstBytes), 0, packetbytes, 0, 4);
-            Array.ConstrainedCopy(BitConverter.GetBytes(jsonSize), 0, packetbytes, 4, 4);
+            Array.ConstrainedCopy(BitConverter.GetBytes(firstBytes.ReverseBytes()), 0, packetbytes, 0, 4);
+            Array.ConstrainedCopy(BitConverter.GetBytes(jsonSize.ReverseBytes()), 0, packetbytes, 8, 4);
             if (message.Version > 1)
-                Array.ConstrainedCopy(BitConverter.GetBytes(message.CorrelationId), 0, packetbytes, 8, 4);
+                Array.ConstrainedCopy(BitConverter.GetBytes(message.CorrelationId.ReverseBytes()), 0, packetbytes, 4, 4);
             if (message.Payload != null)
                 Array.ConstrainedCopy(message.Payload, 0, packetbytes, headersize, jsonSize);
             if (message.BulkData != null)
@@ -41,12 +41,12 @@ namespace SmartDeviceLink.Net.Converters
         {
             var message = new ProtocolMessage();
             var payload = protocolFrame.Payload;
-            message.RpcType = payload[0] >> 4;
-            message.FunctionId = (FunctionID)(BitConverter.ToInt32(payload, 0) & 0xFFFFFFF);
-            var jsonSize = BitConverter.ToInt32(payload, 4);
+            message.RpcType = (byte)((payload[0] >> 4).ReverseBytes());
+            message.FunctionId = (FunctionID)(BitConverter.ToInt32(payload, 0).ReverseBytes() & 0xFFFFFFF);
+            var jsonSize = BitConverter.ToInt32(payload, 8).ReverseBytes();
             if (protocolFrame.Version > 1)
             {
-                message.CorrelationId = BitConverter.ToInt32(payload,8);
+                message.CorrelationId = BitConverter.ToInt32(payload,4);
             }
 
             var startbyte = 8;
@@ -72,6 +72,12 @@ namespace SmartDeviceLink.Net.Converters
             }
 
             return message;
+        }
+
+        private static int ReverseBytes(this int value)
+        {
+            return (int)((value & 0x000000FFU) << 24 | (value & 0x0000FF00U) << 8 |
+                   (value & 0x00FF0000U) >> 8 | (value & 0xFF000000U) >> 24);
         }
     }
 }
