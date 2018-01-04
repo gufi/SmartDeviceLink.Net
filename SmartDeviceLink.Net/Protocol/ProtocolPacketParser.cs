@@ -50,7 +50,7 @@ namespace SmartDeviceLink.Net.Protocol
         {
             packet = new TransportPacket();
             packet.Version = (data & VERSION_MASK) >> 4;
-            if (packet.Version < 1 || packet.Version > 5)
+            if (packet.Version < 1 || packet.Version >= 5)
             {
                 _logger.LogError("Packet Version Invalid" + packet.Version);
                 return;
@@ -144,9 +144,10 @@ namespace SmartDeviceLink.Net.Protocol
                 case FrameType.Control:
                     break;
                 case FrameType.First:
-                    {
-                        if (packet.DataSize != FIRST_FRAME_DATA_SIZE) ByteHandler = StartState;// this is an error state, so start over
-                    }
+                {
+                    if (packet.DataSize != FIRST_FRAME_DATA_SIZE)
+                        ByteHandler = StartState; // this is an error state, so start over
+                }
                     break;
                 default:
                     ByteHandler = StartState;
@@ -160,6 +161,7 @@ namespace SmartDeviceLink.Net.Protocol
                     HandlePacket();
                     return;
                 }
+
                 if (packet.DataSize <= V1_V2_MTU_SIZE - V1_HEADER_SIZE)
                 {
                     packet.Payload = new byte[packet.DataSize];
@@ -169,13 +171,17 @@ namespace SmartDeviceLink.Net.Protocol
                     ByteHandler = StartState;
                     return;
                 }
+
                 ByteHandler = DataPumpState;
             }
-            else // non version 1 packet
+            else if ((packet.Version == 2 && packet.DataSize <= V1_V2_MTU_SIZE)
+                     || (packet.Version > 2 && packet.DataSize <= V3_V4_MTU_SIZE)) // non version 1 packet)
             {
                 packet.Payload = new byte[packet.DataSize];
                 ByteHandler = Message1State;
             }
+            else
+                ByteHandler = StartState;
         }
 
         protected virtual void Message1State(byte data)
