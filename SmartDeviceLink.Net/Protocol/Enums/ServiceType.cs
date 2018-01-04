@@ -5,7 +5,7 @@ using System.Text;
 
 namespace SmartDeviceLink.Net.Protocol.Enums
 {
-    public enum SessionType : byte
+    public enum ServiceType : byte
     {
         Control = 0,
         Rpc = 0x7,

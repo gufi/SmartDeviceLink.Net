@@ -7,8 +7,9 @@ namespace SmartDeviceLink.Net.Protocol.Session
 {
     public class Session
     {
-        public SessionType SessionType { get; set; }
+        public ServiceType ServiceType { get; set; }
         public byte SessionId { get; set; }
-
+        public int  Version { get; set; }
+        public DateTime LastTxRx { get; set; }
     }
 }

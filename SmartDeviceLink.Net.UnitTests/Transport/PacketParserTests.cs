@@ -141,7 +141,7 @@ namespace SmartDeviceLink.Net.UnitTests.Transport
         {
             Assert.AreEqual(packet.Version, version);
             Assert.AreEqual((byte)packet.FrameType, frameType);
-            Assert.AreEqual(packet.ServiceType, (SessionType)serviceType);
+            Assert.AreEqual(packet.ServiceType, (ServiceType)serviceType);
             Assert.AreEqual((byte)packet.ControlFrameInfo, frameInfoType);
             Assert.AreEqual(packet.DataSize, data?.Length ?? 0);
         }

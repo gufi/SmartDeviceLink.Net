@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace SmartDeviceLink.Net.Protocol.Enums
+﻿namespace SmartDeviceLink.Net.Rpc.Base
 {
     //find replace
     //[\D]+\((-\d+), "([\w]+)"\),

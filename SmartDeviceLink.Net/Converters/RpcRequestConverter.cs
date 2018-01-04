@@ -15,7 +15,7 @@ namespace SmartDeviceLink.Net.Converters
 
             protocolMessage.Payload = Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(request));
             protocolMessage.MessageType = MessageType.Rpc;
-            protocolMessage.SessionType = SessionType.Rpc;
+            protocolMessage.ServiceType = ServiceType.Rpc;
             protocolMessage.FunctionId = request.Id;
             protocolMessage.IsPayloadProtected = request.IsPayloadProtected;
             protocolMessage.CorrelationId = request.CorrelationId;

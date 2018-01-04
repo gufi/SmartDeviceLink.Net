@@ -69,7 +69,7 @@ namespace SmartDeviceLink.Net.Protocol
 
         protected virtual void ServiceTypeState(byte data)
         {
-            packet.ServiceType = (SessionType)(data & 0xFF);
+            packet.ServiceType = (ServiceType)(data & 0xFF);
             ByteHandler = ControlFrameInfoState;
             _logger.LogVerbose($"Service Type: {packet.ServiceType}");
         }

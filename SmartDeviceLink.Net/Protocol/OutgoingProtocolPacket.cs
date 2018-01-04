@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using SmartDeviceLink.Net.Protocol.Enums;
+using SmartDeviceLink.Net.Rpc.Base;
 using SmartDeviceLink.Net.Transport.Enums;
 
 namespace SmartDeviceLink.Net.Transport

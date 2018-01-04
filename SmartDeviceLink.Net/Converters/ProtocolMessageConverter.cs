@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using SmartDeviceLink.Net.Protocol;
 using SmartDeviceLink.Net.Protocol.Enums;
+using SmartDeviceLink.Net.Rpc.Base;
 using SmartDeviceLink.Net.Transport;
 
 namespace SmartDeviceLink.Net.Converters

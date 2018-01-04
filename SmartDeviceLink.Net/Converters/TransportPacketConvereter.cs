@@ -20,7 +20,7 @@ namespace SmartDeviceLink.Net.Converters
                 packet.Payload);
         }
 
-        private static byte[] GeneratePacket(int version, FrameType frameType, SessionType serviceType, FrameInfo frameInfoType,
+        private static byte[] GeneratePacket(int version, FrameType frameType, ServiceType serviceType, FrameInfo frameInfoType,
             byte sessionId, int message,bool isEncrypted, byte[] databytes)
         {
             var dataSize = 0;
