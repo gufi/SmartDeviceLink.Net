@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using SmartDeviceLink.Net.Common;
 using SmartDeviceLink.Net.Converters;
 using SmartDeviceLink.Net.Exceptions;
 using SmartDeviceLink.Net.Logging;
@@ -34,7 +35,7 @@ namespace SmartDeviceLink.Net.SdlService
        public async Task<RpcRequest> SendAsync(RpcRequest request)
         {
             var protocolMessage = request.ToProtocolMessage();
-            var result = await _protocol.SendAsync(protocolMessage);
+            var result = await _protocol.SendAsync(protocolMessage).TimeoutAfter(1000);
             return  ToRpcRequest(result);
         }
 

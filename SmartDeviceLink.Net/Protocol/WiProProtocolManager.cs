@@ -26,7 +26,6 @@ namespace SmartDeviceLink.Net.Protocol
 
         private int _messageId = 1;
         private List<Session.Session> _sessions = null;
-        private ConcurrentQueue<TransportPacket> _transportPackets;
         private TaskCompletionSource<ProtocolMessage> _afterSendRecieveCompletion;
         private bool isDisposed;
 
@@ -35,7 +34,6 @@ namespace SmartDeviceLink.Net.Protocol
 
         public WiProProtocolManager( ITransport transport)
         {
-            _transportPackets = new ConcurrentQueue<TransportPacket>();
             _transport = transport;
             _transport.OnRecievedPacket = PacketRecieved;
             _sessions = new List<Session.Session>();
@@ -70,15 +68,10 @@ namespace SmartDeviceLink.Net.Protocol
                 var transportPackets = CreateTransportPackets(protocolMessage);
 
                 foreach (var item in transportPackets)
-                    _transportPackets.Enqueue(item);
-                while (!_transportPackets.IsEmpty)
-                {
-                    TransportPacket packet = null;
-                    _transportPackets.TryDequeue(out packet);
-                    await _transport.SendAsync(packet);
+                { 
+                    await _transport.SendAsync(item);
                 }
-
-                // this method needs a way to time out
+                
                 session1.LastTxRx = DateTime.Now;
                 var response = await _afterSendRecieveCompletion.Task;
                 session1.LastTxRx = DateTime.Now;
@@ -96,9 +89,9 @@ namespace SmartDeviceLink.Net.Protocol
         }
 
         /// <summary>
-        /// Move to protocol
+        /// Packet handler
         /// </summary>
-        /// <param name="packet"></param>
+        /// <param name="packet">Message as it comes back from the packet parser class</param>
         private void PacketRecieved(TransportPacket packet)
         {
             _logger.LogVerbose("Packet Recieved", packet);
@@ -109,6 +102,12 @@ namespace SmartDeviceLink.Net.Protocol
                 //handle start session, grab session id
                 var session = GetSession(packet.ServiceType);
                 session.SessionId = packet.SessionId;
+                if (packet.ControlFrameInfo == FrameInfo.EndService)
+                {
+                    _logger.LogError("Connection Closed",packet);
+                    _afterSendRecieveCompletion.TrySetException(
+                        new Exception("Connection Closed by remote"));
+                }
             }
             else
             {

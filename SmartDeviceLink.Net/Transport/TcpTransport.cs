@@ -61,14 +61,15 @@ namespace SmartDeviceLink.Net.Transport
 
         public override void RecieveBytes()
         {
+            
             while (!IsDisposed)
                 if (_client != null && _client.Connected)
                 {
                     var stream = _client.GetStream();
-                    {
-                        var _byte = (byte)stream.ReadByte();
-                        Parser.HandleByte(_byte);
-                    }
+                    var buffer = new byte[1024];
+                    var read =  stream.Read(buffer,0, 1024);
+                    for(int i = 0; i < read; i++)
+                        Parser.HandleByte(buffer[i]);
                 }
         }
     }

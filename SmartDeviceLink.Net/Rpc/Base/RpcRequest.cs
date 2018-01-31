@@ -20,7 +20,7 @@ namespace SmartDeviceLink.Net.Rpc.Base
         {
             get { return (int)Id; }
         }
-        public int AppId { get; set; }
+        public string AppId { get; set; }
         public string JsonRpc { get; set; }
         public string Method { get; set; }
         public bool IsPayloadProtected { get; set; }

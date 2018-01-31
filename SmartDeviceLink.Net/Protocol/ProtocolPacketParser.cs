@@ -52,7 +52,7 @@ namespace SmartDeviceLink.Net.Protocol
             packet.Version = (data & VERSION_MASK) >> 4;
             if (packet.Version < 1 || packet.Version >= 5)
             {
-                _logger.LogError("Packet Version Invalid" + packet.Version);
+                //_logger.LogError("Packet Version Invalid" + packet.Version);
                 return;
             }
             packet.IsEncrypted = (data & COMPRESSION_MASK) > 0; // sdl_android doesnt use this?

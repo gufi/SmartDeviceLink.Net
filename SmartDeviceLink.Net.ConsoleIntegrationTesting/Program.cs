@@ -24,21 +24,29 @@ namespace SmartDeviceLink.Net.ConsoleIntegrationTesting
         static async Task MainAsync(string[] args)
         {
             var packets = new List<TransportPacket>();
-            using (var client = new SdlClient(new TcpTransport("m.sdl.tools", 5838)))
+            using (var client = new SdlClient(new TcpTransport("m.sdl.tools", 5474)))
             {
                 
                 Console.WriteLine("Connected");
-                var rpc = new RpcRequest<AllowDeviceToConnect>();
-                rpc.Id = FunctionID.Show;
-                rpc.AppId = 100;
-                rpc.Method = "BasicCommunication.AllowDeviceToConnect";
-                rpc.JsonRpc = "2.0";
-                rpc.Params.DeviceInfo.Id = 9;
-                rpc.Params.DeviceInfo.Name = "Test Phone";
+                var rpc = new RpcRequest<RegisterAppInterface>();
+                rpc.Id = FunctionID.RegisterAppInterface;
+                //rpc.AppId = 100;
+                rpc.Method = "UI.RegisterAppInterface";
+                //rpc.JsonRpc = "2.0";
+                //rpc.Params.DeviceInfo.Id = 9;
+                //rpc.Params.DeviceInfo.Name = "Test Phone";
                 char exit = 'a';
                 do
                 {
-                    var blah = await client.SendAsync(rpc);
+                    try
+                    {
+                        var blah = await client.SendAsync(rpc);
+                    }
+                    catch
+                    {
+                        Console.Write("Timeout");
+                    }
+
                     exit = Console.ReadKey().KeyChar;
                 } while (exit != 'e');
             }

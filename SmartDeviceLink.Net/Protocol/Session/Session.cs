@@ -5,6 +5,10 @@ using SmartDeviceLink.Net.Protocol.Enums;
 
 namespace SmartDeviceLink.Net.Protocol.Session
 {
+    /// <summary>
+    /// Sessions are Service types and related data.
+    /// This class represents an active session
+    /// </summary>
     public class Session
     {
         public ServiceType ServiceType { get; set; }
