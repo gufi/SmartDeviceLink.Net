@@ -35,7 +35,7 @@ namespace SmartDeviceLink.Net.SdlService
        public async Task<RpcRequest> SendAsync(RpcRequest request)
         {
             var protocolMessage = request.ToProtocolMessage();
-            var result = await _protocol.SendAsync(protocolMessage).TimeoutAfter(1000);
+            var result = await _protocol.SendAsync(protocolMessage).TimeoutAfter(10000);
             return  ToRpcRequest(result);
         }
 

@@ -5,29 +5,31 @@ using SmartDeviceLink.Net.Protocol.Enums;
 
 namespace SmartDeviceLink.Net.Rpc.Base
 {
-    public class RpcRequest<T> : RpcRequest where T : new()
+    public abstract class RpcRequestWithBulkData<T> : RpcRequest<T> where T : new()
     {
-        public RpcRequest() => Params = new T();
-        public T Params { get; set; }
+        public byte[] bulkData { get; set; }
+    }
+    public abstract class RpcRequest<T> : RpcRequest where T : new()
+    {
+        public RpcRequest() => parameters = new T();
+        public T parameters { get; set; }
     }
 
-    public class RpcRequest
+    public abstract class RpcRequest
     {
         [JsonIgnore]
-        public FunctionID Id { get; set; }
-        public string FunctionName { get { return Id.ToString(); } }
-        public int FunctionId
+        public abstract FunctionID FunctionId { get; set; } 
+        public string name
         {
-            get { return (int)Id; }
+            get => FunctionId.ToString();
+            set => FunctionId = (FunctionID)Enum.Parse(typeof(FunctionID),value);
         }
-        public string AppId { get; set; }
-        public string JsonRpc { get; set; }
-        public string Method { get; set; }
-        public bool IsPayloadProtected { get; set; }
-        public int CorrelationId { get; set; }
+        
 
+        // ReSharper disable once InconsistentNaming
+        public int correlationID { get; set; } = 1;
         [JsonIgnore]
-        public byte[] BulkData { get; set; }
+        public bool IsPayloadProtected { get; set; }
 
     }
 }

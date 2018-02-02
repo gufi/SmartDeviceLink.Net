@@ -124,15 +124,18 @@ namespace SmartDeviceLink.Net.Protocol
         /// </summary>
         public async Task StartSessionAsync(ServiceType type)
         {
+            var bson = Bson.BsonConvert.ToBson(new Dictionary<string, string> {{"protocolVersion", "5.0.0"}});
             await _transport.SendAsync(new TransportPacket()
             {
-                Version = 4,
+                Version = 5,
                 FrameType = FrameType.Control,
                 ControlFrameInfo = FrameInfo.StartSession,
                 SessionId = 0,
                 MessageId = 1,
                 ServiceType = type,
-                IsEncrypted = false
+                IsEncrypted = false,
+                Payload = bson,
+                DataSize = bson.Length
             });
         }
         /// <summary>
