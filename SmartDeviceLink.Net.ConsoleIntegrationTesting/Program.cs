@@ -10,6 +10,7 @@ using SmartDeviceLink.Net.Protocol;
 using SmartDeviceLink.Net.Protocol.Enums;
 using SmartDeviceLink.Net.Rpc.Base;
 using SmartDeviceLink.Net.Rpc.BasicCommunication;
+using SmartDeviceLink.Net.Rpc.Response;
 using SmartDeviceLink.Net.SdlService;
 
 namespace SmartDeviceLink.Net.ConsoleIntegrationTesting
@@ -24,22 +25,25 @@ namespace SmartDeviceLink.Net.ConsoleIntegrationTesting
         static async Task MainAsync(string[] args)
         {
             var packets = new List<TransportPacket>();
-            using (var client = new SdlClient(new TcpTransport("m.sdl.tools", 5807)))
+            using (var client = new SdlClient(new TcpTransport("m.sdl.tools", 5557)))
             {
                 
                 Console.WriteLine("Connected");
                 var rpc = new RegisterAppInterface();
                 char exit = 'a';
                 await client.StartSession();
+                await Task.Delay(5000);
+                await client.RegisterAppWithHmi(rpc);
+                Logger.SdlLogger.LogVerbose("Hmi Info",client.HmiInfo);
                 do
                 {
                     try
                     {
-                        var blah = await client.SendAsync(rpc);
+                        //var blah = 
                     }
-                    catch
+                    catch(Exception ex)
                     {
-                        Console.Write("Timeout");
+                        Console.WriteLine(ex);
                     }
 
                     exit = Console.ReadKey().KeyChar;

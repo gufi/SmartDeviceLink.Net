@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using SmartDeviceLink.Net.Converters;
+using SmartDeviceLink.Net.Exceptions;
 using SmartDeviceLink.Net.Logging;
 using SmartDeviceLink.Net.Protocol.Enums;
 using SmartDeviceLink.Net.Transport;
@@ -46,7 +47,7 @@ namespace SmartDeviceLink.Net.Protocol
         public async Task<ProtocolMessage> SendAsync(ProtocolMessage protocolMessage)
         {
             var session = GetSession(protocolMessage.ServiceType);
-            if (session.SessionId == 0) await StartSessionAsync(protocolMessage.ServiceType);
+            if (session.SessionId == 0) throw new SessionUnregisteredException($"Session for {protocolMessage.ServiceType} has not been registered yet");
             return await SendAfterSessionAsync(session,protocolMessage);
         }
 
@@ -62,9 +63,9 @@ namespace SmartDeviceLink.Net.Protocol
 
 
                 protocolMessage.SessionId = session1.SessionId;
-                _logger.LogVerbose("Created Protocol Message", protocolMessage);
-                _logger.LogVerbose("Bytes: " + protocolMessage.JsonSize);
-                protocolMessage.Version = 5; // hard coded... pull from session?
+                //_logger.LogVerbose("Created Protocol Message", protocolMessage);
+                //_logger.LogVerbose("Bytes: " + protocolMessage.JsonSize);
+                protocolMessage.Version = session1.Version; // hard coded... pull from session?
                 var transportPackets = CreateTransportPackets(protocolMessage);
 
                 foreach (var item in transportPackets)
@@ -76,7 +77,8 @@ namespace SmartDeviceLink.Net.Protocol
                 var response = await _afterSendRecieveCompletion.Task;
                 session1.LastTxRx = DateTime.Now;
                 if (response == null) return null;
-                session1.SessionId = response.SessionId;
+                if(response.SessionId > 0)
+                    session1.SessionId = response.SessionId;
                 if (response.Version > 1) session1.Version = response.Version;
                 return response;
             }
@@ -121,6 +123,7 @@ namespace SmartDeviceLink.Net.Protocol
             //handle start session, grab session id
             var session = GetSession(packet.ServiceType);
             session.SessionId = packet.SessionId;
+            if(packet.Version > 1) session.Version = packet.Version;
             if (packet.ControlFrameInfo == FrameInfo.EndService)
             {
                 _logger.LogError("Connection Closed", packet);

@@ -6,6 +6,9 @@ using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using SmartDeviceLink.Net.Logging;
+using SmartDeviceLink.Net.Protocol.Enums;
+using SmartDeviceLink.Net.Rpc.Base;
+using SmartDeviceLink.Net.Transport.Enums;
 
 namespace SmartDeviceLink.Net.ConsoleIntegrationTesting
 {
@@ -13,7 +16,15 @@ namespace SmartDeviceLink.Net.ConsoleIntegrationTesting
     {
         JsonSerializerSettings settings = new JsonSerializerSettings()
         {
-            Converters = new List<JsonConverter>() {  new ByteConverter()},
+            Converters = new List<JsonConverter>()
+            {
+                new ByteConverter(),
+                new FrameInfoConverter(),
+                new ServiceTypeConverter(),
+                new MessageTypeConverter(),
+                new FrameTypeConverter(),
+                new FunctionIDConverter()
+            },
             Formatting = Formatting.Indented
         };
         public void LogVerbose(string message, object obj = null)
@@ -49,6 +60,96 @@ namespace SmartDeviceLink.Net.ConsoleIntegrationTesting
         public override bool CanConvert(Type objectType)
         {
             return objectType == typeof(byte[]);
+        }
+    }
+
+    public class FrameInfoConverter : JsonConverter
+    {
+        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+        {
+            writer.WriteValue(value.ToString());
+        }
+
+        public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+        {
+            return existingValue;
+        }
+
+        public override bool CanConvert(Type objectType)
+        {
+            return objectType == typeof(FrameInfo);
+        }
+    }
+
+    public class ServiceTypeConverter : JsonConverter
+    {
+        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+        {
+            writer.WriteValue(value.ToString());
+        }
+
+        public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+        {
+            return existingValue;
+        }
+
+        public override bool CanConvert(Type objectType)
+        {
+            return objectType == typeof(ServiceType);
+        }
+    }
+
+    public class FrameTypeConverter : JsonConverter
+    {
+        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+        {
+            writer.WriteValue(value.ToString());
+        }
+
+        public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+        {
+            return existingValue;
+        }
+
+        public override bool CanConvert(Type objectType)
+        {
+            return objectType == typeof(FrameType);
+        }
+    }
+
+    public class MessageTypeConverter : JsonConverter
+    {
+        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+        {
+            writer.WriteValue(value.ToString());
+        }
+
+        public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+        {
+            return existingValue;
+        }
+
+        public override bool CanConvert(Type objectType)
+        {
+            return objectType == typeof(MessageType);
+        }
+    }
+
+    public class FunctionIDConverter : JsonConverter
+    {
+        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+        {
+            writer.WriteValue(value.ToString());
+        }
+
+        public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+        {
+            return existingValue;
+        }
+
+        public override bool CanConvert(Type objectType)
+        {
+            return objectType == typeof(FunctionID);
         }
     }
 }

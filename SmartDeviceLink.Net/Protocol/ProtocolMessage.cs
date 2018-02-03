@@ -8,7 +8,7 @@ namespace SmartDeviceLink.Net.Protocol
 {
     public class ProtocolMessage : OutgoingProtocolPacket
     {
-        public MessageType MessageType { get; set; }
+        //public MessageType MessageType { get; set; }
         public ServiceType ServiceType { get; set; }
         public int JsonSize => Payload?.Length ?? 0;
         public bool IsPayloadProtected { get; set; }

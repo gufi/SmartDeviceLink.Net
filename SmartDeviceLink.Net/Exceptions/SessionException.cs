@@ -4,9 +4,9 @@ using System.Text;
 
 namespace SmartDeviceLink.Net.Exceptions
 {
-    public class SessionException: Exception
+    public class SessionUnregisteredException: Exception
     {
-        public SessionException(string message):base(message)
+        public SessionUnregisteredException(string message):base(message)
         {
             
         }

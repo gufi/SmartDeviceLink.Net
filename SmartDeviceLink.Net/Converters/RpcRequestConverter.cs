@@ -21,7 +21,6 @@ namespace SmartDeviceLink.Net.Converters
             var protocolMessage = new ProtocolMessage();
 
             protocolMessage.Payload = Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(request, _jsonSettings));
-            protocolMessage.MessageType = MessageType.Rpc;
             protocolMessage.ServiceType = ServiceType.Rpc;
             protocolMessage.FunctionId = request.FunctionId;
             protocolMessage.IsPayloadProtected = request.IsPayloadProtected;
@@ -30,26 +29,6 @@ namespace SmartDeviceLink.Net.Converters
             if (request.FunctionId.Equals(FunctionID.PutFile))
                 protocolMessage.PriorityCoefficient = 1;
             return protocolMessage;
-        }
-
-
-    }
-
-    public class BoolConverter : JsonConverter
-    {
-        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
-        {
-            writer.WriteValue(((bool)value) ? "true" : "false");
-        }
-
-        public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
-        {
-            return reader.Value.ToString().Equals("true",StringComparison.CurrentCultureIgnoreCase);
-        }
-
-        public override bool CanConvert(Type objectType)
-        {
-            return objectType == typeof(bool);
         }
     }
 }
