@@ -64,7 +64,7 @@ namespace SmartDeviceLink.Net.Protocol
                 protocolMessage.SessionId = session1.SessionId;
                 _logger.LogVerbose("Created Protocol Message", protocolMessage);
                 _logger.LogVerbose("Bytes: " + protocolMessage.JsonSize);
-                protocolMessage.Version = 4; // hard coded... pull from session?
+                protocolMessage.Version = 5; // hard coded... pull from session?
                 var transportPackets = CreateTransportPackets(protocolMessage);
 
                 foreach (var item in transportPackets)
@@ -98,30 +98,38 @@ namespace SmartDeviceLink.Net.Protocol
 
             if (packet.FrameType == FrameType.Control)
             {
-                _logger.LogVerbose("Packet is a control frame");
-                //handle start session, grab session id
-                var session = GetSession(packet.ServiceType);
-                session.SessionId = packet.SessionId;
-                if (packet.ControlFrameInfo == FrameInfo.EndService)
-                {
-                    _logger.LogError("Connection Closed",packet);
-                    _afterSendRecieveCompletion.TrySetException(
-                        new Exception("Connection Closed by remote"));
-                }
+                HandleControlFrame(packet);
             }
             else
             {
-                var pm = packet.ToProtocolMessage();
-                _logger.LogVerbose("To Protocol message", packet.ToProtocolMessage());
-                if (pm.JsonSize > 0)
-                    _logger.LogVerbose(Encoding.ASCII.GetString(pm.Payload));
-                _afterSendRecieveCompletion.SetResult(pm);
+                HandleRpc(packet);
             }
         }
 
-        /// <summary>
-        /// Move This to Protocol Manager
-        /// </summary>
+        private void HandleRpc(TransportPacket packet)
+        {
+            var pm = packet.ToProtocolMessage();
+            _logger.LogVerbose("To Protocol message", packet.ToProtocolMessage());
+            if (pm.JsonSize > 0)
+                _logger.LogVerbose(Encoding.ASCII.GetString(pm.Payload));
+            _afterSendRecieveCompletion.SetResult(pm);
+        }
+
+        private void HandleControlFrame(TransportPacket packet)
+        {
+            _logger.LogVerbose("Packet is a control frame");
+            //handle start session, grab session id
+            var session = GetSession(packet.ServiceType);
+            session.SessionId = packet.SessionId;
+            if (packet.ControlFrameInfo == FrameInfo.EndService)
+            {
+                _logger.LogError("Connection Closed", packet);
+                _afterSendRecieveCompletion.TrySetException(
+                    new Exception("Connection Closed by remote"));
+            }
+        }
+
+
         public async Task StartSessionAsync(ServiceType type)
         {
             var bson = Bson.BsonConvert.ToBson(new Dictionary<string, string> {{"protocolVersion", "5.0.0"}});

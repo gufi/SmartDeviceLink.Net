@@ -39,6 +39,11 @@ namespace SmartDeviceLink.Net.SdlService
             return  ToRpcRequest(result);
         }
 
+        public async Task StartSession()
+        {
+            await _protocol.StartSessionAsync(ServiceType.Rpc);
+        }
+
         private RpcRequest ToRpcRequest(ProtocolMessage message)
         {
             if (message == null) return null;

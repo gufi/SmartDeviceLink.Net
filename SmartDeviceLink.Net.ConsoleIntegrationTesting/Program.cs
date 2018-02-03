@@ -24,12 +24,13 @@ namespace SmartDeviceLink.Net.ConsoleIntegrationTesting
         static async Task MainAsync(string[] args)
         {
             var packets = new List<TransportPacket>();
-            using (var client = new SdlClient(new TcpTransport("m.sdl.tools", 5237)))
+            using (var client = new SdlClient(new TcpTransport("m.sdl.tools", 5807)))
             {
                 
                 Console.WriteLine("Connected");
                 var rpc = new RegisterAppInterface();
                 char exit = 'a';
+                await client.StartSession();
                 do
                 {
                     try

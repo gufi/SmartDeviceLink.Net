@@ -174,8 +174,8 @@ namespace SmartDeviceLink.Net.Protocol
 
                 ByteHandler = DataPumpState;
             }
-            else if ((packet.Version == 2 && packet.DataSize <= V1_V2_MTU_SIZE)
-                     || (packet.Version > 2 && packet.DataSize <= V3_V4_MTU_SIZE)) // non version 1 packet)
+            else if ((packet.Version == 2 && packet.DataSize <= V1_V2_MTU_SIZE
+                     || packet.Version > 2 && packet.DataSize <= V3_V4_MTU_SIZE) && packet.DataSize > 0) // non version 1 packet)
             {
                 packet.Payload = new byte[packet.DataSize];
                 ByteHandler = Message1State;
