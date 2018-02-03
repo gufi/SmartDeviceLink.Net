@@ -29,7 +29,7 @@ namespace SmartDeviceLink.Net.Protocol
         private static readonly int V1_HEADER_SIZE = WiProProtocolManager.V1_HEADER_SIZE;
         private static readonly int V2_HEADER_SIZE = WiProProtocolManager.V2_HEADER_SIZE;
 
-        private List<byte> _readBytes = new List<byte>();
+        private LinkedList<byte> _readBytes = new LinkedList<byte>();
 
         private TransportPacket packet;
         public ProtocolPacketParser(Action<TransportPacket> packetHandler)
@@ -44,29 +44,38 @@ namespace SmartDeviceLink.Net.Protocol
 
             _logger.LogVerbose($"reset: Count {_readBytes.Count} reset from {ByteHandler.GetMethodInfo().Name}");
             ByteHandler = StartState;
-            lastKnownGoodByte = 0;
+            lastKnownGoodByte = null;
             if (_readBytes != null && _readBytes.Count > 0)
-                _readBytes.RemoveAt(0);
+            {
+                _readBytes.RemoveFirst();
+                lastKnownGoodByte = _readBytes.First;
+            }
         }
 
         public void HandleByte(byte data)
         {
-            _readBytes.Add(data);
+            _readBytes.AddLast(data);
+            lastKnownGoodByte = _readBytes.Last;
             HandleByte();
         }
 
-        private int lastKnownGoodByte = 0;
+        private LinkedListNode<byte> lastKnownGoodByte = null;
         private void HandleByte()
         {
-            while(_readBytes.Count > 0 && lastKnownGoodByte < _readBytes.Count)
-                ByteHandler(_readBytes[lastKnownGoodByte++]);
-            
+            while (lastKnownGoodByte != null)
+            {
+                ByteHandler(lastKnownGoodByte.Value);
+                if (lastKnownGoodByte?.Next == null) return;
+                lastKnownGoodByte = lastKnownGoodByte.Next;
+
+            }
+
         }
 
         private void HandlePacket()
         {
-            _readBytes = new List<byte>();
-            lastKnownGoodByte = 0;
+            _readBytes = new LinkedList<byte>();
+            lastKnownGoodByte = null;
             _packetHandler(packet);
             ByteHandler = StartState;
         }
