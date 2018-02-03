@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Reflection;
 using SmartDeviceLink.Net.Logging;
 using SmartDeviceLink.Net.Protocol.Enums;
 using SmartDeviceLink.Net.Transport;
@@ -27,6 +29,8 @@ namespace SmartDeviceLink.Net.Protocol
         private static readonly int V1_HEADER_SIZE = WiProProtocolManager.V1_HEADER_SIZE;
         private static readonly int V2_HEADER_SIZE = WiProProtocolManager.V2_HEADER_SIZE;
 
+        private List<byte> _readBytes = new List<byte>();
+
         private TransportPacket packet;
         public ProtocolPacketParser(Action<TransportPacket> packetHandler)
         {
@@ -35,13 +39,34 @@ namespace SmartDeviceLink.Net.Protocol
         }
         private Action<byte> ByteHandler { get; set; }
 
+        private void ResetDueToError()
+        {
+
+            _logger.LogVerbose($"reset: Count {_readBytes.Count} reset from {ByteHandler.GetMethodInfo().Name}");
+            ByteHandler = StartState;
+            lastKnownGoodByte = 0;
+            if (_readBytes != null && _readBytes.Count > 0)
+                _readBytes.RemoveAt(0);
+        }
+
         public void HandleByte(byte data)
         {
-            ByteHandler(data);
+            _readBytes.Add(data);
+            HandleByte();
+        }
+
+        private int lastKnownGoodByte = 0;
+        private void HandleByte()
+        {
+            while(_readBytes.Count > 0 && lastKnownGoodByte < _readBytes.Count)
+                ByteHandler(_readBytes[lastKnownGoodByte++]);
+            
         }
 
         private void HandlePacket()
         {
+            _readBytes = new List<byte>();
+            lastKnownGoodByte = 0;
             _packetHandler(packet);
             ByteHandler = StartState;
         }
@@ -50,7 +75,7 @@ namespace SmartDeviceLink.Net.Protocol
         {
             packet = new TransportPacket();
             packet.Version = (data & VERSION_MASK) >> 4;
-            if (packet.Version < 1 || packet.Version >= 5)
+            if (packet.Version < 1 || packet.Version > 5)
             {
                 //_logger.LogError("Packet Version Invalid" + packet.Version);
                 return;
@@ -60,6 +85,7 @@ namespace SmartDeviceLink.Net.Protocol
             if (!Enum.IsDefined(typeof(FrameType), frameType))
             {
                 _logger.LogError("FrameType undefined " + frameType);
+                ResetDueToError();
                 return;
             }
             packet.FrameType = (FrameType)frameType;
@@ -87,7 +113,7 @@ namespace SmartDeviceLink.Net.Protocol
                     {
                         if ((data & 0xFF) > 0)
                         {
-                            ByteHandler = StartState; // must be FrameInfo.HeatBeat_FinalConsecutiveFrame_Reserved
+                            ResetDueToError(); // must be FrameInfo.HeatBeat_FinalConsecutiveFrame_Reserved
                             return;
                         }
 
@@ -95,14 +121,14 @@ namespace SmartDeviceLink.Net.Protocol
                     break;
                 default:
                     {// due to enum i dont think this can ever be hit
-                        ByteHandler = StartState;
+                        ResetDueToError();
                         return;
                     }
             }
             if (Enum.IsDefined(typeof(FrameInfo), data)) packet.ControlFrameInfo = (FrameInfo)(int)data;
             else
             {
-                ByteHandler = StartState;
+                ResetDueToError();
                 _logger.LogError("Invalid Frame Info Type: " + data);
                 return;
             }
@@ -146,11 +172,11 @@ namespace SmartDeviceLink.Net.Protocol
                 case FrameType.First:
                 {
                     if (packet.DataSize != FIRST_FRAME_DATA_SIZE)
-                        ByteHandler = StartState; // this is an error state, so start over
+                        ResetDueToError(); // this is an error state, so start over
                 }
                     break;
                 default:
-                    ByteHandler = StartState;
+                    ResetDueToError();
                     break;
             }
 
@@ -168,20 +194,20 @@ namespace SmartDeviceLink.Net.Protocol
                 }
                 else
                 {
-                    ByteHandler = StartState;
+                    ResetDueToError();
                     return;
                 }
 
                 ByteHandler = DataPumpState;
             }
             else if ((packet.Version == 2 && packet.DataSize <= V1_V2_MTU_SIZE
-                     || packet.Version > 2 && packet.DataSize <= V3_V4_MTU_SIZE) && packet.DataSize > 0) // non version 1 packet)
+                     || packet.Version > 2 && packet.DataSize <= V3_V4_MTU_SIZE) && packet.DataSize >= 0) // non version 1 packet)
             {
                 packet.Payload = new byte[packet.DataSize];
                 ByteHandler = Message1State;
             }
             else
-                ByteHandler = StartState;
+                ResetDueToError();
         }
 
         protected virtual void Message1State(byte data)
@@ -217,6 +243,7 @@ namespace SmartDeviceLink.Net.Protocol
             if (packet.DumpSize < packet.Payload.Length)
             {
                 packet.Payload[packet.DumpSize++] = data;
+                if(packet.DumpSize % 1000 == 10)
                 _logger.LogVerbose($"Recieved Byte {packet.DumpSize} of {packet.Payload.Length}");
                 if(packet.DumpSize == packet.Payload.Length)
                     HandlePacket();
