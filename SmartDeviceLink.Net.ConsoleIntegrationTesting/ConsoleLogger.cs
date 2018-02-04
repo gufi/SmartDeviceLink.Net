@@ -14,6 +14,9 @@ namespace SmartDeviceLink.Net.ConsoleIntegrationTesting
 {
     public class ConsoleLogger : ILogger
     {
+
+        public LogLevel LogLevel { get; set; } = LogLevel.Info;
+
         JsonSerializerSettings settings = new JsonSerializerSettings()
         {
             Converters = new List<JsonConverter>()
@@ -21,7 +24,6 @@ namespace SmartDeviceLink.Net.ConsoleIntegrationTesting
                 new ByteConverter(),
                 new FrameInfoConverter(),
                 new ServiceTypeConverter(),
-                new MessageTypeConverter(),
                 new FrameTypeConverter(),
                 new FunctionIDConverter()
             },
@@ -29,16 +31,49 @@ namespace SmartDeviceLink.Net.ConsoleIntegrationTesting
         };
         public void LogVerbose(string message, object obj = null)
         {
-            Console.WriteLine(message);
+            if (LogLevel < LogLevel.Verbose) return;
+            Console.WriteLine($"VERBOSE: {message}");
             if (obj != null)
-                Console.WriteLine("\t" + JsonConvert.SerializeObject(obj,settings));
+                Console.WriteLine( JsonConvert.SerializeObject(obj,settings));
+        }
+
+        public void LogDebug(string message, object obj = null)
+        {
+            if (LogLevel < LogLevel.Debug) return;
+            Console.WriteLine($"DEBUG: {message}");
+            if (obj != null)
+                Console.WriteLine(JsonConvert.SerializeObject(obj, settings));
+        }
+
+        public void LogInfo(string message)
+        {
+            if (LogLevel < LogLevel.Info) return;
+            Console.WriteLine($"INFORMATION: {message}");
+        }
+
+        public void LogWarning(string message)
+        {
+            if (LogLevel < LogLevel.Warning) return;
+            Console.WriteLine($"WARNING: {message}");
+        }
+
+
+        public void LogFatal(string message, object obj = null, Exception e = null)
+        {
+            if (LogLevel < LogLevel.Fatal) return;
+            Console.WriteLine($"FATAL: {message}");
+            if (obj != null)
+                Console.WriteLine(JsonConvert.SerializeObject(obj, settings));
+            if (e != null)
+                Console.WriteLine("\t" + e);
         }
 
         public void LogError(string message, object obj = null, Exception e = null)
         {
-            Console.WriteLine(message);
+            if (LogLevel < LogLevel.Error) return;
+            Console.WriteLine($"ERROR: {message}");
             if (obj != null)
-                Console.WriteLine("\t" + JsonConvert.SerializeObject(obj, settings));
+                Console.WriteLine(JsonConvert.SerializeObject(obj, settings));
             if (e != null)
                 Console.WriteLine("\t"+e);
         }
@@ -114,24 +149,6 @@ namespace SmartDeviceLink.Net.ConsoleIntegrationTesting
         public override bool CanConvert(Type objectType)
         {
             return objectType == typeof(FrameType);
-        }
-    }
-
-    public class MessageTypeConverter : JsonConverter
-    {
-        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
-        {
-            writer.WriteValue(value.ToString());
-        }
-
-        public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
-        {
-            return existingValue;
-        }
-
-        public override bool CanConvert(Type objectType)
-        {
-            return objectType == typeof(MessageType);
         }
     }
 
