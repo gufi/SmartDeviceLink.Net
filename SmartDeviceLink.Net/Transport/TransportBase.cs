@@ -4,6 +4,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using SmartDeviceLink.Net.Protocol;
+using SmartDeviceLink.Net.Protocol.Models;
 using SmartDeviceLink.Net.Transport.Interfaces;
 
 namespace SmartDeviceLink.Net.Transport

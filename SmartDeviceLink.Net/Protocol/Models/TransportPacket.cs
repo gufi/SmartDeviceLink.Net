@@ -1,7 +1,7 @@
 ﻿using SmartDeviceLink.Net.Protocol.Enums;
 using SmartDeviceLink.Net.Transport.Enums;
 
-namespace SmartDeviceLink.Net.Protocol
+namespace SmartDeviceLink.Net.Protocol.Models
 {
     public class TransportPacket // replicates sdl_android SdlPacket
     {

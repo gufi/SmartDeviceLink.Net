@@ -5,6 +5,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Protocol\Heartbeat\**" />
+    <EmbeddedResource Remove="Protocol\Heartbeat\**" />
+    <None Remove="Protocol\Heartbeat\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Update="Transport\Enums\FrameInfo.t4">
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>FrameInfo.cs</LastGenOutput>
@@ -25,10 +31,6 @@
 
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json.Bson" Version="1.0.1" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Protocol\Heartbeat\" />
   </ItemGroup>
 
 </Project>

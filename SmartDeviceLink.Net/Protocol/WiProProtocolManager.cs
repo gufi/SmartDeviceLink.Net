@@ -5,10 +5,12 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using SmartDeviceLink.Net.Common;
 using SmartDeviceLink.Net.Converters;
 using SmartDeviceLink.Net.Exceptions;
 using SmartDeviceLink.Net.Logging;
 using SmartDeviceLink.Net.Protocol.Enums;
+using SmartDeviceLink.Net.Protocol.Models;
 using SmartDeviceLink.Net.Transport;
 using SmartDeviceLink.Net.Transport.Enums;
 using SmartDeviceLink.Net.Transport.Interfaces;
@@ -60,12 +62,8 @@ namespace SmartDeviceLink.Net.Protocol
                     await _afterSendRecieveCompletion.Task;
                 lock(lockobj)
                     _afterSendRecieveCompletion = new TaskCompletionSource<ProtocolMessage>();
-
-
                 protocolMessage.SessionId = session1.SessionId;
-                //_logger.LogVerbose("Created Protocol Message", protocolMessage);
-                //_logger.LogVerbose("Bytes: " + protocolMessage.JsonSize);
-                protocolMessage.Version = session1.Version; // hard coded... pull from session?
+                protocolMessage.Version = session1.Version;
                 var transportPackets = CreateTransportPackets(protocolMessage);
 
                 foreach (var item in transportPackets)
@@ -84,7 +82,7 @@ namespace SmartDeviceLink.Net.Protocol
             }
             catch (Exception e)
             {
-                _logger.LogError("broke", e: e);
+                _logger.LogError("Unable to send message to HMI", e: e);
             }
 
             return null;
@@ -97,15 +95,11 @@ namespace SmartDeviceLink.Net.Protocol
         private void PacketRecieved(TransportPacket packet)
         {
             _logger.LogVerbose("Packet Recieved", packet);
-
             if (packet.FrameType == FrameType.Control)
-            {
                 HandleControlFrame(packet);
-            }
             else
-            {
                 HandleRpc(packet);
-            }
+            
         }
 
         private void HandleRpc(TransportPacket packet)
@@ -173,16 +167,72 @@ namespace SmartDeviceLink.Net.Protocol
         /// <returns></returns>
         public IEnumerable<TransportPacket> CreateTransportPackets(ProtocolMessage message)
         {
-            var tPackets = new List<TransportPacket>();
-            message.SessionId = 1; // This is a stub, this should be found from the eventual implementation of the session object
+            List<TransportPacket> tPackets = null;
+            var session = GetSession(message.ServiceType);
+            message.SessionId = session.SessionId; 
             var messageBytes = message.ToProtocolFrame();
-            // for now secured data is not supported
 
-            // data is not going to be processed in one of two ways
-            // first is single send
-            var p = SinglePacket(message, messageBytes, _messageId++);
-            _logger.LogVerbose("CreatedSinglePacket",p);
-            tPackets.Add(p);
+            var mtuSize = session.Version < 3? V1_V2_MTU_SIZE : V3_V4_MTU_SIZE;
+            
+            if (message.JsonSize > mtuSize)
+            {
+                tPackets = CreateMultiPacket(message, messageBytes, mtuSize);
+            }
+            else
+            {
+                var p = SinglePacket(message, messageBytes, _messageId++);
+                _logger.LogVerbose("CreatedSinglePacket", p);
+                tPackets = new List<TransportPacket>();
+                tPackets.Add(p);
+            }
+            return tPackets;
+        }
+
+        private List<TransportPacket> CreateMultiPacket(ProtocolMessage message, byte[] messageBytes, int mtuSize)
+        {
+            List<TransportPacket> tPackets = new List<TransportPacket>();
+            var messageid = _messageId++;
+            var firstFramePacket = new TransportPacket()
+            {
+                Version = message.Version,
+                ServiceType = message.ServiceType,
+                FrameType = FrameType.First,
+                MessageId = messageid,
+                Payload = BitConverter.GetBytes(message.JsonSize),
+                DataSize = 8,
+                PriorityCoefficient = message.PriorityCoefficient + 1,
+                SessionId = message.SessionId,
+                IsEncrypted = message.IsPayloadProtected
+            };
+            tPackets.Add(firstFramePacket);
+            var splitPayload = messageBytes.Split(mtuSize).ToList();
+            var lastPayload = splitPayload.Last();
+            var frameSequenceNumber = 0;
+            int priCoef = 1;
+            foreach (var item in splitPayload)
+            {
+                frameSequenceNumber++;
+                if (!item.Equals(lastPayload) && frameSequenceNumber == 0)
+                {
+                    frameSequenceNumber = 1; // for roll over 0 is reserved for last frame
+                }
+                else if (item.Equals(lastPayload))
+                    frameSequenceNumber = 0;
+
+                var consecPacket = new TransportPacket()
+                {
+                    Version = message.Version,
+                    ServiceType = message.ServiceType,
+                    FrameType = FrameType.First,
+                    MessageId = messageid,
+                    Payload = (byte[]) item,
+                    DataSize = ((byte[]) item).Length,
+                    PriorityCoefficient = message.PriorityCoefficient + 1 + priCoef++,
+                    SessionId = message.SessionId,
+                    IsEncrypted = message.IsPayloadProtected
+                };
+                tPackets.Add(consecPacket);
+            }
 
             return tPackets;
         }
@@ -192,7 +242,7 @@ namespace SmartDeviceLink.Net.Protocol
             var transportPacket = new TransportPacket();
             transportPacket.MessageId = messageId;
             transportPacket.Version = protocolPacket.Version;
-            transportPacket.IsEncrypted = false;
+            transportPacket.IsEncrypted = protocolPacket.IsPayloadProtected;
             transportPacket.FrameType = FrameType.Single;
             transportPacket.ServiceType =  protocolPacket.ServiceType;
             transportPacket.SessionId = protocolPacket.SessionId;

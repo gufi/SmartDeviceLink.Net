@@ -10,6 +10,7 @@ using SmartDeviceLink.Net.Exceptions;
 using SmartDeviceLink.Net.Logging;
 using SmartDeviceLink.Net.Protocol;
 using SmartDeviceLink.Net.Protocol.Enums;
+using SmartDeviceLink.Net.Protocol.Models;
 using SmartDeviceLink.Net.Protocol.Session;
 using SmartDeviceLink.Net.Rpc.Base;
 using SmartDeviceLink.Net.Rpc.BasicCommunication;
@@ -29,16 +30,18 @@ namespace SmartDeviceLink.Net.SdlService
         private readonly ITransport _transport;
         private readonly WiProProtocolManager _protocol;
         public RegisterAppInterfaceResponse HmiInfo { get; private set; }
-
-        public SdlClient(ITransport transport)
+        public int RequestTimeout { get; set; }
+        public SdlClient(ITransport transport,int timeoutMs = 10000)
         {
             _protocol = new WiProProtocolManager(transport);
+            RequestTimeout = timeoutMs;
         }
+
 
         public async Task<T> SendAsync<T>(RpcRequest request) 
         {
             var protocolMessage = request.ToProtocolMessage();
-            var result = await _protocol.SendAsync(protocolMessage).TimeoutAfter(10000);
+            var result = await _protocol.SendAsync(protocolMessage).TimeoutAfter(RequestTimeout);
             var requestResponse = ToRpcRequest<T>(result);
             return requestResponse;
         }

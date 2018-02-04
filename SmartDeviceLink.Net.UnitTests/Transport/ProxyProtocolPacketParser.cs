@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using SmartDeviceLink.Net.Protocol;
+using SmartDeviceLink.Net.Protocol.Models;
 using SmartDeviceLink.Net.Transport;
 
 namespace SmartDeviceLink.Net.UnitTests.Transport

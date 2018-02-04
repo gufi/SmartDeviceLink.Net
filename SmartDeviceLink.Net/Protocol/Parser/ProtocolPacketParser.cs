@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using SmartDeviceLink.Net.Logging;
 using SmartDeviceLink.Net.Protocol.Enums;
+using SmartDeviceLink.Net.Protocol.Models;
 using SmartDeviceLink.Net.Transport;
 using SmartDeviceLink.Net.Transport.Enums;
 using SmartDeviceLink.Net.Transport.Interfaces;

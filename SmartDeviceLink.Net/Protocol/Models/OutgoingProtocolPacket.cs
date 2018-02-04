@@ -1,11 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using SmartDeviceLink.Net.Protocol.Enums;
-using SmartDeviceLink.Net.Rpc.Base;
-using SmartDeviceLink.Net.Transport.Enums;
+﻿using SmartDeviceLink.Net.Rpc.Base;
 
-namespace SmartDeviceLink.Net.Transport
+namespace SmartDeviceLink.Net.Protocol.Models
 {
     public class OutgoingProtocolPacket // replicates sdl_android SdlPacket
     {

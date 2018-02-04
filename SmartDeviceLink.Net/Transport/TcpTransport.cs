@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using SmartDeviceLink.Net.Converters;
 using SmartDeviceLink.Net.Logging;
 using SmartDeviceLink.Net.Protocol;
+using SmartDeviceLink.Net.Protocol.Models;
 using SmartDeviceLink.Net.Transport.Interfaces;
 
 namespace SmartDeviceLink.Net.Transport

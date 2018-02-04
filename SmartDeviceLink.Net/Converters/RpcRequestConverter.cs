@@ -4,6 +4,7 @@ using System.Text;
 using Newtonsoft.Json;
 using SmartDeviceLink.Net.Protocol;
 using SmartDeviceLink.Net.Protocol.Enums;
+using SmartDeviceLink.Net.Protocol.Models;
 using SmartDeviceLink.Net.Rpc.Base;
 
 namespace SmartDeviceLink.Net.Converters
