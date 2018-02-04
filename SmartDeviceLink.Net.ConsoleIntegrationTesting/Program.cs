@@ -8,6 +8,7 @@ using SmartDeviceLink.Net.Bson;
 using SmartDeviceLink.Net.Logging;
 using SmartDeviceLink.Net.Protocol;
 using SmartDeviceLink.Net.Protocol.Enums;
+using SmartDeviceLink.Net.Protocol.Models;
 using SmartDeviceLink.Net.Rpc.Base;
 using SmartDeviceLink.Net.Rpc.BasicCommunication;
 using SmartDeviceLink.Net.Rpc.Response;
@@ -34,7 +35,8 @@ namespace SmartDeviceLink.Net.ConsoleIntegrationTesting
                 await client.StartSession();
                 await Task.Delay(5000);
                 await client.RegisterAppWithHmi(rpc);
-                Logger.SdlLogger.LogVerbose("Hmi Info",client.HmiInfo);
+                Logger.SdlLogger.LogInfo("Hmi Info Received");
+                Logger.SdlLogger.LogVerbose("Hmi Info", client.HmiInfo);
                 do
                 {
                     try
