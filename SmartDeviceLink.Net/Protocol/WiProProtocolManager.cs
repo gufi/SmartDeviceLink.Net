@@ -41,7 +41,7 @@ namespace SmartDeviceLink.Net.Protocol
         {
             _transport = transport;
             _eventHandler = eventHandler;
-            _transport.OnRecievedPacket = PacketRecieved;
+            _transport.OnReceivedPacket = PacketReceived;
             _sessions = new List<Session.Session>();
             _heartbeatCancelToken = new CancellationTokenSource();
             
@@ -68,8 +68,8 @@ namespace SmartDeviceLink.Net.Protocol
             {
                 protocolMessage.SessionId = session.SessionId;
                 protocolMessage.Version = session.Version;
-                var afterSendRecieveCompletion = new TaskCompletionSource<ProtocolMessage>();
-                _protocolMessageManager.Add(protocolMessage, afterSendRecieveCompletion);
+                var afterSendReceiveCompletion = new TaskCompletionSource<ProtocolMessage>();
+                _protocolMessageManager.Add(protocolMessage, afterSendReceiveCompletion);
                 var transportPackets = CreateTransportPackets(protocolMessage);
 
                 foreach (var item in transportPackets)
@@ -78,7 +78,7 @@ namespace SmartDeviceLink.Net.Protocol
                 }
                 
                 session.LastTxRx = DateTime.Now;
-                var response = await afterSendRecieveCompletion.Task;
+                var response = await afterSendReceiveCompletion.Task;
                 session.LastTxRx = DateTime.Now;
                 if (response == null) return null;
                 if(response.SessionId > 0)
@@ -98,9 +98,9 @@ namespace SmartDeviceLink.Net.Protocol
         /// Packet handler
         /// </summary>
         /// <param name="packet">Message as it comes back from the packet parser class</param>
-        private void PacketRecieved(TransportPacket packet)
+        private void PacketReceived(TransportPacket packet)
         {
-            _logger.LogDebug("Packet Recieved", packet);
+            _logger.LogDebug("Packet Received", packet);
             var session = GetSession(packet.ServiceType);
             if (packet.Version > 1) session.Version = packet.Version;
             session.SessionId = packet.SessionId;

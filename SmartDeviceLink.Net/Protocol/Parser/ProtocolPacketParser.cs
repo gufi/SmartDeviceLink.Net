@@ -254,7 +254,7 @@ namespace SmartDeviceLink.Net.Protocol
             {
                 packet.Payload[packet.DumpSize++] = data;
                 if(packet.DumpSize % 1000 == 10)
-                _logger.LogVerbose($"Recieved Byte {packet.DumpSize} of {packet.Payload.Length}");
+                _logger.LogVerbose($"Received Byte {packet.DumpSize} of {packet.Payload.Length}");
                 if(packet.DumpSize == packet.Payload.Length)
                     HandlePacket();
             }

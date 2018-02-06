@@ -12,7 +12,7 @@ namespace SmartDeviceLink.Net.Transport
     public abstract class TransportBase : ITransport
     {
         private readonly CancellationTokenSource _cTok;
-        private readonly Task _recieveTask;
+        private readonly Task _receiveTask;
         protected IPacketParser Parser { get; }
 
         protected bool IsDisposed { get; private set; } = false;
@@ -20,27 +20,27 @@ namespace SmartDeviceLink.Net.Transport
         public TransportBase()
         {
             _cTok = new CancellationTokenSource();
-            Parser = new ProtocolPacketParser(PacketRecieved);
-            _recieveTask = Task.Factory.StartNew(RecieveBytes, _cTok.Token,TaskCreationOptions.None);
-            _recieveTask.ConfigureAwait(false);
+            Parser = new ProtocolPacketParser(PacketReceived);
+            _receiveTask = Task.Factory.StartNew(ReceiveBytes, _cTok.Token,TaskCreationOptions.None);
+            _receiveTask.ConfigureAwait(false);
         }
 
-        private void PacketRecieved(TransportPacket packet)
+        private void PacketReceived(TransportPacket packet)
         {
-            OnRecievedPacket?.Invoke(packet);
+            OnReceivedPacket?.Invoke(packet);
         }
 
-        public abstract Task RecieveBytes(object o);
+        public abstract Task ReceiveBytes(object o);
         public abstract Task SendAsync(TransportPacket packet);
         public abstract bool IsConnected { get; }
-        public Action<TransportPacket> OnRecievedPacket { get; set; }
+        public Action<TransportPacket> OnReceivedPacket { get; set; }
 
         public virtual void Dispose()
         {
             if (!IsDisposed)
             {
                 _cTok.Cancel();
-                OnRecievedPacket = null;
+                OnReceivedPacket = null;
             }
             IsDisposed = true;
         }

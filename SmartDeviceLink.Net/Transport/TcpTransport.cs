@@ -27,7 +27,6 @@ namespace SmartDeviceLink.Net.Transport
             _port = port;
             _client = new TcpClient();
             _client.NoDelay = true;
-            //_client.Client.Blocking = false;
 
         }
         private Task ConnectAsync()
@@ -64,7 +63,7 @@ namespace SmartDeviceLink.Net.Transport
             base.Dispose();
         }
 
-        public override async Task RecieveBytes(object o)
+        public override async Task ReceiveBytes(object o)
         {
             
             while (!IsDisposed)
