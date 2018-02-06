@@ -3,6 +3,7 @@
     //find replace
     //[\D]+\((-\d+), "([\w]+)"\),
     //$2 = $1, \r\n
+    // ReSharper disable once InconsistentNaming
     public enum FunctionID
     {
         SyncPData = 65537,
@@ -33,10 +34,13 @@
         SubscribeVehicleData = 20,
         UnsubscribeVehicleData = 21,
         GetVehicleData = 22,
+        // ReSharper disable once InconsistentNaming
         ReadDID = 23,
+        // ReSharper disable once InconsistentNaming
         GetDTCs = 24,
         ScrollableMessage = 25,
         Slider = 26,
+        // ReSharper disable once InconsistentNaming
         ShowConstantTBT = 27,
         AlertManeuver = 28,
         UpdateTurnList = 29,
@@ -59,12 +63,14 @@
         UnsubscribeWayPoints = 47,
         GetSystemCapability = 48,
         SendHapticData = 49,
+        // ReSharper disable once InconsistentNaming
         OnHMIStatus = 32768,
         OnAppInterfaceUnregistered = 32769,
         OnButtonEvent = 32770,
         OnButtonPress = 32771,
         OnVehicleData = 32772,
         OnCommand = 32773,
+        // ReSharper disable once InconsistentNaming
         OnTBTClientState = 32774,
         OnDriverDistraction = 32775,
         OnPermissionsChange = 32776,

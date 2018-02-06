@@ -33,4 +33,8 @@
     <PackageReference Include="Newtonsoft.Json.Bson" Version="1.0.1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Rpc\Response\Event\" />
+  </ItemGroup>
+
 </Project>

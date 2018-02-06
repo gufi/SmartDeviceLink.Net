@@ -80,6 +80,7 @@ namespace SmartDeviceLink.Net.Transport
                 }
                 if(_clientHasConnected && _client != null && !_client.Connected)
                     _logger.LogWarning("client disconnected");
+                await Task.Delay(100);
             }
             _logger.LogWarning("Disposed TcpTransport");
         }

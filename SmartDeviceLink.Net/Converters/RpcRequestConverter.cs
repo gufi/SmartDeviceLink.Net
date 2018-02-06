@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 using SmartDeviceLink.Net.Protocol;
 using SmartDeviceLink.Net.Protocol.Enums;
 using SmartDeviceLink.Net.Protocol.Models;
@@ -14,7 +15,8 @@ namespace SmartDeviceLink.Net.Converters
         private static readonly JsonSerializerSettings _jsonSettings = new JsonSerializerSettings()
         {
             NullValueHandling = NullValueHandling.Ignore,
-            Converters = new List<JsonConverter>(new List<JsonConverter>())
+            Converters = new List<JsonConverter>(new List<JsonConverter>()),
+            ContractResolver = new CamelCasePropertyNamesContractResolver()
         };
         //todo: convert to interface
         public static ProtocolMessage ToProtocolMessage(this RpcRequest request)
@@ -25,7 +27,7 @@ namespace SmartDeviceLink.Net.Converters
             protocolMessage.ServiceType = ServiceType.Rpc;
             protocolMessage.FunctionId = request.FunctionId;
             protocolMessage.IsPayloadProtected = request.IsPayloadProtected;
-            protocolMessage.CorrelationId = request.correlationID;
+            protocolMessage.CorrelationId = request.CorrelationID;
             //protocolMessage.BulkData = request.BulkData;
             if (request.FunctionId.Equals(FunctionID.PutFile))
                 protocolMessage.PriorityCoefficient = 1;

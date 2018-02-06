@@ -7,19 +7,23 @@ namespace SmartDeviceLink.Net.Rpc.Base
 {
     public abstract class RpcRequestWithBulkData<T> : RpcRequest<T> where T : new()
     {
-        public byte[] bulkData { get; set; }
+        public byte[] BulkData { get; set; }
     }
     public abstract class RpcRequest<T> : RpcRequest where T : new()
     {
-        public RpcRequest() => parameters = new T();
-        public T parameters { get; set; }
+        public RpcRequest() => Parameters = new T();
+        public T Parameters { get; set; }
+    }
+    public abstract class RpcRequestWithBulkData : RpcRequest
+    {
+        public byte[] bulkData { get; set; }
     }
 
     public abstract class RpcRequest
     {
         [JsonIgnore]
         public abstract FunctionID FunctionId { get; set; } 
-        public string name
+        public string Name
         {
             get => FunctionId.ToString();
             set => FunctionId = (FunctionID)Enum.Parse(typeof(FunctionID),value);
@@ -27,7 +31,7 @@ namespace SmartDeviceLink.Net.Rpc.Base
         
 
         // ReSharper disable once InconsistentNaming
-        public int correlationID { get; set; } = 1;
+        public int CorrelationID { get; set; } = 1;
         [JsonIgnore]
         public bool IsPayloadProtected { get; set; }
 
