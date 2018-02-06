@@ -22,6 +22,7 @@ namespace SmartDeviceLink.Net.Protocol
     public class WiProProtocolManager :IDisposable
     {
         private readonly ITransport _transport;
+        private readonly Action<ProtocolMessage> _eventHandler;
 
         private ILogger _logger => Logger.SdlLogger;
         public static readonly int V1_V2_MTU_SIZE = 1500;
@@ -36,9 +37,10 @@ namespace SmartDeviceLink.Net.Protocol
         private bool isDisposed;
         
 
-        public WiProProtocolManager( ITransport transport)
+        public WiProProtocolManager( ITransport transport, Action<ProtocolMessage> eventHandler)
         {
             _transport = transport;
+            _eventHandler = eventHandler;
             _transport.OnRecievedPacket = PacketRecieved;
             _sessions = new List<Session.Session>();
             _heartbeatCancelToken = new CancellationTokenSource();
@@ -112,7 +114,7 @@ namespace SmartDeviceLink.Net.Protocol
         private void HandleRpc(TransportPacket packet)
         {// This does not currently support consecutive packets
             var pm = packet.ToProtocolMessage();
-            _logger.LogDebug("To Protocol message", packet.ToProtocolMessage());
+            _logger.LogVerbose("To Protocol message", packet.ToProtocolMessage());
             if (pm.JsonSize > 0)
                 _logger.LogVerbose(Encoding.ASCII.GetString(pm.Payload));
             var response = _protocolMessageManager.FirstOrDefault(x => x.Key.FunctionId == pm.FunctionId);
@@ -124,7 +126,8 @@ namespace SmartDeviceLink.Net.Protocol
             }
             else if (pm.FunctionId.ToString().StartsWith("On") || pm.FunctionId.ToString().Contains(".On"))
             {
-                _logger.LogInfo("Event Based Packet",pm);
+                _logger.LogDebug("Event Based Packet",pm);
+                _eventHandler(pm);
             }
         }
 
@@ -142,7 +145,7 @@ namespace SmartDeviceLink.Net.Protocol
             }
             else if (packet.ControlFrameInfo == FrameInfo.HeartBeatAck)
             {
-                _logger.LogInfo("HeartBeat",packet);
+                _logger.LogDebug("HeartBeat",packet);
             }
         }
 

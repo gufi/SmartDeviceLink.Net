@@ -15,6 +15,7 @@ using SmartDeviceLink.Net.Protocol.Session;
 using SmartDeviceLink.Net.Rpc.Base;
 using SmartDeviceLink.Net.Rpc.BasicCommunication;
 using SmartDeviceLink.Net.Rpc.Response;
+using SmartDeviceLink.Net.Rpc.Response.Event;
 using SmartDeviceLink.Net.Transport;
 using SmartDeviceLink.Net.Transport.Enums;
 using SmartDeviceLink.Net.Transport.Interfaces;
@@ -32,14 +33,13 @@ namespace SmartDeviceLink.Net.SdlService
         private readonly WiProProtocolManager _protocol;
         public RegisterAppInterfaceResponse HmiInfo { get; private set; }
         public int RequestTimeout { get; set; }
+        
         public SdlClient(ITransport transport,int timeoutMs = 10000)
         {
-            _protocol = new WiProProtocolManager(transport);
+            _protocol = new WiProProtocolManager(transport, SdlEventHandler);
             RequestTimeout = timeoutMs;
             _transport = transport;
         }
-
-
         public async Task<T> SendAsync<T>(RpcRequest request) 
         {
             var protocolMessage = request.ToProtocolMessage();
@@ -67,6 +67,34 @@ namespace SmartDeviceLink.Net.SdlService
             }
 
             return default(T);
+        }
+
+        public event Action<OnHMIStatus> OnHmiStatus;
+        public event Action<OnSystemRequest> OnSystemRequest;
+        private void SdlEventHandler(ProtocolMessage response)
+        {
+            switch (response.FunctionId)
+            {
+                case FunctionID.OnHMIStatus:
+                    RaiseEvent(response.Payload,OnHmiStatus);
+                    break;
+                case FunctionID.OnSystemRequest:
+                    RaiseEvent(response.Payload,OnSystemRequest);
+                    break;
+                default:
+                    _logger.LogDebug("Unknown event type",response);
+                    break;
+
+            }
+        }
+
+        private void RaiseEvent<T>(byte[] jsonArray, Action<T> e)
+        {
+            if (e != null && jsonArray != null && jsonArray.Length >= 2)
+            {
+                var jsonString = Encoding.ASCII.GetString(jsonArray);
+                e(JsonConvert.DeserializeObject<T>(jsonString));
+            }
         }
 
         public void Dispose()

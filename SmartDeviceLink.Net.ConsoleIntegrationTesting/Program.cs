@@ -32,9 +32,10 @@ namespace SmartDeviceLink.Net.ConsoleIntegrationTesting
         static async Task MainAsync(string[] args)
         {
             var packets = new List<TransportPacket>();
-            using (var client = new SdlClient(new TcpTransport("m.sdl.tools", 5260)))
+            using (var client = new SdlClient(new TcpTransport("m.sdl.tools", 5539)))
             {
-
+                client.OnSystemRequest += request => Logger.SdlLogger.LogInfo("On System Request event triggered",request);
+                client.OnHmiStatus += request => Logger.SdlLogger.LogInfo("On HMI status event triggered",request);
                 Logger.SdlLogger.LogInfo("Connected");
                 var rpc = new RegisterAppInterface();
                 bool exit = false;
@@ -71,5 +72,6 @@ namespace SmartDeviceLink.Net.ConsoleIntegrationTesting
 
             }
         }
+        
     }
 }

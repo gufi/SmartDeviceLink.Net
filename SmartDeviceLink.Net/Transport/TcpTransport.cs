@@ -74,13 +74,12 @@ namespace SmartDeviceLink.Net.Transport
                     var buffer = new byte[256];
                     _logger.LogVerbose("Reading");
                     var read = await _client.Client.ReceiveAsync(new ArraySegment<byte>(buffer),SocketFlags.None);
-                    _logger.LogDebug($"Read {read} bytes");
+                    _logger.LogVerbose($"Read {read} bytes");
                     for (int i = 0; i < read; i++)
                         Parser.HandleByte(buffer[i]);
                 }
                 if(_clientHasConnected && _client != null && !_client.Connected)
                     _logger.LogWarning("client disconnected");
-                await Task.Delay(100);
             }
             _logger.LogWarning("Disposed TcpTransport");
         }
