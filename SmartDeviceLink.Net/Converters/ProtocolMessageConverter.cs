@@ -46,6 +46,8 @@ namespace SmartDeviceLink.Net.Converters
             message.RpcType = (byte)((payload[0] >> 4).ReverseBytes());
             message.FunctionId = (FunctionID)(BitConverter.ToInt32(payload, 0).ReverseBytes() & 0xFFFFFFF);
             message.SessionId = protocolFrame.SessionId;
+            message.ServiceType = protocolFrame.ServiceType;
+            message.MessageId = protocolFrame.MessageId;
             //message.MessageType
             var jsonSize = BitConverter.ToInt32(payload, 8).ReverseBytes();
             if (protocolFrame.Version > 1)

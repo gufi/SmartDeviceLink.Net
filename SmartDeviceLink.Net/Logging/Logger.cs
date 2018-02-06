@@ -35,16 +35,20 @@ namespace SmartDeviceLink.Net.Logging
                 Debug.WriteLine(JsonConvert.SerializeObject(obj, settings));
         }
 
-        public void LogInfo(string message)
+        public void LogInfo(string message, object obj = null)
         {
             if (LogLevel < LogLevel.Info) return;
             Debug.WriteLine($"INFORMATION: {message}");
+            if (obj != null)
+                Debug.WriteLine(JsonConvert.SerializeObject(obj, settings));
         }
 
-        public void LogWarning(string message)
+        public void LogWarning(string message, object obj = null)
         {
             if (LogLevel < LogLevel.Warning) return;
             Debug.WriteLine($"WARNING: {message}");
+            if (obj != null)
+                Debug.WriteLine(JsonConvert.SerializeObject(obj, settings));
         }
 
 

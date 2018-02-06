@@ -19,13 +19,16 @@ namespace SmartDeviceLink.Net.Transport
         private readonly string _endpoint;
         private readonly int _port;
         private TcpClient _client = null;
+        private bool _clientHasConnected = false;
 
         public TcpTransport(string endpoint,int port) 
         {
             _endpoint = endpoint;
             _port = port;
             _client = new TcpClient();
-            
+            _client.NoDelay = true;
+            //_client.Client.Blocking = false;
+
         }
         private Task ConnectAsync()
         {
@@ -39,12 +42,13 @@ namespace SmartDeviceLink.Net.Transport
             {
                 _logger.LogVerbose($"Connecting to {_endpoint}:{_port}");
                 await ConnectAsync();
+                _clientHasConnected = true;
                 _logger.LogVerbose($"Connected to {_endpoint}:{_port}");
             }
             
-            var stream = _client.GetStream();
+            //var stream = _client.GetStream();
             var bytes = packet.ToTransportPacketFrame();
-            await stream.WriteAsync(bytes, 0, bytes.Length);
+            await _client.Client.SendAsync(new ArraySegment<byte>(bytes),SocketFlags.None);
             _logger.LogVerbose($"Sent {bytes.Length} to {_endpoint}:{_port}");
         }
 
@@ -60,18 +64,24 @@ namespace SmartDeviceLink.Net.Transport
             base.Dispose();
         }
 
-        public override void RecieveBytes()
+        public override async Task RecieveBytes(object o)
         {
             
             while (!IsDisposed)
+            {
                 if (_client != null && _client.Connected)
                 {
-                    var stream = _client.GetStream();
-                    var buffer = new byte[1024];
-                    var read =  stream.Read(buffer,0, 1024);
-                    for(int i = 0; i < read; i++)
+                    var buffer = new byte[256];
+                    _logger.LogVerbose("Reading");
+                    var read = await _client.Client.ReceiveAsync(new ArraySegment<byte>(buffer),SocketFlags.None);
+                    _logger.LogDebug($"Read {read} bytes");
+                    for (int i = 0; i < read; i++)
                         Parser.HandleByte(buffer[i]);
                 }
+                if(_clientHasConnected && _client != null && !_client.Connected)
+                    _logger.LogWarning("client disconnected");
+            }
+            _logger.LogWarning("Disposed TcpTransport");
         }
     }
     

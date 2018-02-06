@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -11,6 +12,7 @@ using SmartDeviceLink.Net.Exceptions;
 using SmartDeviceLink.Net.Logging;
 using SmartDeviceLink.Net.Protocol.Enums;
 using SmartDeviceLink.Net.Protocol.Models;
+using SmartDeviceLink.Net.Rpc.Base;
 using SmartDeviceLink.Net.Transport;
 using SmartDeviceLink.Net.Transport.Enums;
 using SmartDeviceLink.Net.Transport.Interfaces;
@@ -29,17 +31,19 @@ namespace SmartDeviceLink.Net.Protocol
 
         private int _messageId = 1;
         private List<Session.Session> _sessions = null;
-        private TaskCompletionSource<ProtocolMessage> _afterSendRecieveCompletion;
+        private readonly CancellationTokenSource _heartbeatCancelToken;
+        private readonly Task _heartBeatMonitor;
         private bool isDisposed;
-
-        //TODO: Find where this is being set
-        private int protocolVersion = 1;// this will eventually be set upon  start session
+        
 
         public WiProProtocolManager( ITransport transport)
         {
             _transport = transport;
             _transport.OnRecievedPacket = PacketRecieved;
             _sessions = new List<Session.Session>();
+            _heartbeatCancelToken = new CancellationTokenSource();
+            
+            _heartBeatMonitor = Task.Run(SendHeartBeat, _heartbeatCancelToken.Token);
         }
 
         
@@ -54,16 +58,16 @@ namespace SmartDeviceLink.Net.Protocol
         }
 
         private object lockobj = new object();
-        private async Task<ProtocolMessage> SendAfterSessionAsync(Session.Session session1,ProtocolMessage protocolMessage)
+
+        private Dictionary<ProtocolMessage, TaskCompletionSource<ProtocolMessage>> _protocolMessageManager = new Dictionary<ProtocolMessage, TaskCompletionSource<ProtocolMessage>>();
+        private async Task<ProtocolMessage> SendAfterSessionAsync(Session.Session session,ProtocolMessage protocolMessage)
         {
             try
             {
-                if (_afterSendRecieveCompletion != null)
-                    await _afterSendRecieveCompletion.Task;
-                lock(lockobj)
-                    _afterSendRecieveCompletion = new TaskCompletionSource<ProtocolMessage>();
-                protocolMessage.SessionId = session1.SessionId;
-                protocolMessage.Version = session1.Version;
+                protocolMessage.SessionId = session.SessionId;
+                protocolMessage.Version = session.Version;
+                var afterSendRecieveCompletion = new TaskCompletionSource<ProtocolMessage>();
+                _protocolMessageManager.Add(protocolMessage, afterSendRecieveCompletion);
                 var transportPackets = CreateTransportPackets(protocolMessage);
 
                 foreach (var item in transportPackets)
@@ -71,13 +75,13 @@ namespace SmartDeviceLink.Net.Protocol
                     await _transport.SendAsync(item);
                 }
                 
-                session1.LastTxRx = DateTime.Now;
-                var response = await _afterSendRecieveCompletion.Task;
-                session1.LastTxRx = DateTime.Now;
+                session.LastTxRx = DateTime.Now;
+                var response = await afterSendRecieveCompletion.Task;
+                session.LastTxRx = DateTime.Now;
                 if (response == null) return null;
                 if(response.SessionId > 0)
-                    session1.SessionId = response.SessionId;
-                if (response.Version > 1) session1.Version = response.Version;
+                    session.SessionId = response.SessionId;
+                if (response.Version > 1) session.Version = response.Version;
                 return response;
             }
             catch (Exception e)
@@ -94,7 +98,10 @@ namespace SmartDeviceLink.Net.Protocol
         /// <param name="packet">Message as it comes back from the packet parser class</param>
         private void PacketRecieved(TransportPacket packet)
         {
-            _logger.LogVerbose("Packet Recieved", packet);
+            _logger.LogDebug("Packet Recieved", packet);
+            var session = GetSession(packet.ServiceType);
+            if (packet.Version > 1) session.Version = packet.Version;
+            session.SessionId = packet.SessionId;
             if (packet.FrameType == FrameType.Control)
                 HandleControlFrame(packet);
             else
@@ -103,26 +110,39 @@ namespace SmartDeviceLink.Net.Protocol
         }
 
         private void HandleRpc(TransportPacket packet)
-        {
+        {// This does not currently support consecutive packets
             var pm = packet.ToProtocolMessage();
-            _logger.LogVerbose("To Protocol message", packet.ToProtocolMessage());
+            _logger.LogDebug("To Protocol message", packet.ToProtocolMessage());
             if (pm.JsonSize > 0)
                 _logger.LogVerbose(Encoding.ASCII.GetString(pm.Payload));
-            _afterSendRecieveCompletion.SetResult(pm);
+            var response = _protocolMessageManager.FirstOrDefault(x => x.Key.FunctionId == pm.FunctionId);
+
+            if (response.Key != null)
+            { 
+                response.Value.SetResult(pm);
+                _protocolMessageManager.Remove(response.Key);
+            }
+            else if (pm.FunctionId.ToString().StartsWith("On") || pm.FunctionId.ToString().Contains(".On"))
+            {
+                _logger.LogInfo("Event Based Packet",pm);
+            }
         }
 
         private void HandleControlFrame(TransportPacket packet)
         {
-            _logger.LogVerbose("Packet is a control frame");
+            _logger.LogDebug("Packet is a control frame",packet);
             //handle start session, grab session id
-            var session = GetSession(packet.ServiceType);
-            session.SessionId = packet.SessionId;
-            if(packet.Version > 1) session.Version = packet.Version;
+            
             if (packet.ControlFrameInfo == FrameInfo.EndService)
             {
                 _logger.LogError("Connection Closed", packet);
-                _afterSendRecieveCompletion.TrySetException(
+                foreach(var item in _protocolMessageManager)
+                item.Value.TrySetException(
                     new Exception("Connection Closed by remote"));
+            }
+            else if (packet.ControlFrameInfo == FrameInfo.HeartBeatAck)
+            {
+                _logger.LogInfo("HeartBeat",packet);
             }
         }
 
@@ -136,12 +156,38 @@ namespace SmartDeviceLink.Net.Protocol
                 FrameType = FrameType.Control,
                 ControlFrameInfo = FrameInfo.StartSession,
                 SessionId = 0,
-                MessageId = 1,
+                MessageId = _messageId++,
                 ServiceType = type,
                 IsEncrypted = false,
                 Payload = bson,
                 DataSize = bson.Length
             });
+        }
+
+        private async Task SendHeartBeat()
+        {
+            while (!_heartbeatCancelToken.IsCancellationRequested)
+            {
+                await Task.Delay(1000);
+                foreach (var session in _sessions.Where(x =>x.SessionId > 0 && (DateTime.Now- x.LastTxRx).Seconds >= 8))
+                {
+                    await SendHeartBeat(session);
+                }
+            }
+        }
+        private async Task SendHeartBeat(Session.Session session)
+        {
+            await _transport.SendAsync(new TransportPacket()
+            {
+                Version = 5,
+                FrameType = FrameType.Control,
+                ControlFrameInfo = FrameInfo.Heartbeat_FinalConsecutiveFrame_Reserved,
+                SessionId = session.SessionId,
+                MessageId = _messageId++,
+                ServiceType = session.ServiceType,
+                IsEncrypted = false
+            });
+            session.LastTxRx = DateTime.Now;
         }
         /// <summary>
         /// Move This to Protocol Manager
@@ -173,14 +219,15 @@ namespace SmartDeviceLink.Net.Protocol
             var messageBytes = message.ToProtocolFrame();
 
             var mtuSize = session.Version < 3? V1_V2_MTU_SIZE : V3_V4_MTU_SIZE;
-            
+            var messageId = ++_messageId;
+            message.MessageId = messageId;
             if (message.JsonSize > mtuSize)
             {
-                tPackets = CreateMultiPacket(message, messageBytes, mtuSize);
+                tPackets = CreateMultiPacket(message, messageBytes, mtuSize,messageId);
             }
             else
             {
-                var p = SinglePacket(message, messageBytes, _messageId++);
+                var p = SinglePacket(message, messageBytes, messageId);
                 _logger.LogVerbose("CreatedSinglePacket", p);
                 tPackets = new List<TransportPacket>();
                 tPackets.Add(p);
@@ -188,10 +235,9 @@ namespace SmartDeviceLink.Net.Protocol
             return tPackets;
         }
 
-        private List<TransportPacket> CreateMultiPacket(ProtocolMessage message, byte[] messageBytes, int mtuSize)
+        private List<TransportPacket> CreateMultiPacket(ProtocolMessage message, byte[] messageBytes, int mtuSize,int messageid)
         {
             List<TransportPacket> tPackets = new List<TransportPacket>();
-            var messageid = _messageId++;
             var firstFramePacket = new TransportPacket()
             {
                 Version = message.Version,
@@ -256,7 +302,11 @@ namespace SmartDeviceLink.Net.Protocol
         public void Dispose()
         {
             if (!isDisposed)
+            {
                 _transport.Dispose();
+                _heartbeatCancelToken.Cancel();
+            }
+
             isDisposed = true;
         }
     }

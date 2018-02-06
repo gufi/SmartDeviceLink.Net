@@ -45,16 +45,20 @@ namespace SmartDeviceLink.Net.ConsoleIntegrationTesting
                 Console.WriteLine(JsonConvert.SerializeObject(obj, settings));
         }
 
-        public void LogInfo(string message)
+        public void LogInfo(string message, object obj = null)
         {
             if (LogLevel < LogLevel.Info) return;
             Console.WriteLine($"INFORMATION: {message}");
+            if (obj != null)
+                Console.WriteLine(JsonConvert.SerializeObject(obj, settings));
         }
 
-        public void LogWarning(string message)
+        public void LogWarning(string message, object obj = null)
         {
             if (LogLevel < LogLevel.Warning) return;
             Console.WriteLine($"WARNING: {message}");
+            if (obj != null)
+                Console.WriteLine(JsonConvert.SerializeObject(obj, settings));
         }
 
 

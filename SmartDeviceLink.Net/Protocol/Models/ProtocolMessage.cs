@@ -9,5 +9,6 @@ namespace SmartDeviceLink.Net.Protocol.Models
         public int JsonSize => Payload?.Length ?? 0;
         public bool IsPayloadProtected { get; set; }
         public int PriorityCoefficient { get; set; }
+        public int MessageId { get; set; }
     }
 }

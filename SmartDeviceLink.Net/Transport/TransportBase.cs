@@ -21,7 +21,8 @@ namespace SmartDeviceLink.Net.Transport
         {
             _cTok = new CancellationTokenSource();
             Parser = new ProtocolPacketParser(PacketRecieved);
-            _recieveTask = Task.Run((Action)RecieveBytes, _cTok.Token); 
+            _recieveTask = Task.Factory.StartNew(RecieveBytes, _cTok.Token,TaskCreationOptions.None);
+            _recieveTask.ConfigureAwait(false);
         }
 
         private void PacketRecieved(TransportPacket packet)
@@ -29,7 +30,7 @@ namespace SmartDeviceLink.Net.Transport
             OnRecievedPacket?.Invoke(packet);
         }
 
-        public abstract void RecieveBytes();
+        public abstract Task RecieveBytes(object o);
         public abstract Task SendAsync(TransportPacket packet);
         public abstract bool IsConnected { get; }
         public Action<TransportPacket> OnRecievedPacket { get; set; }

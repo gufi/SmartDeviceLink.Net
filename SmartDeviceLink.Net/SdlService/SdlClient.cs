@@ -22,7 +22,8 @@ using SmartDeviceLink.Net.Transport.Interfaces;
 namespace SmartDeviceLink.Net.SdlService
 {
     /// <summary>
-    ///     Based on sdl_Android Sdl Proxy Base
+    ///  SdlClient, uses a transport and with the help of WiProProtocolManager interacts with the HMI
+    ///  The eventual goal for this class is to understand what the hmi is capable of and only allow those kinds of interaction
     /// </summary>
     public class SdlClient : IDisposable
     {
@@ -35,6 +36,7 @@ namespace SmartDeviceLink.Net.SdlService
         {
             _protocol = new WiProProtocolManager(transport);
             RequestTimeout = timeoutMs;
+            _transport = transport;
         }
 
 
@@ -49,6 +51,7 @@ namespace SmartDeviceLink.Net.SdlService
         public async Task RegisterAppWithHmi(RegisterAppInterface raiRequest)
         {
             HmiInfo = await SendAsync<RegisterAppInterfaceResponse>(raiRequest);
+            _logger.LogInfo("Hmi Info Received");
         }
         public async Task StartSession()
         {

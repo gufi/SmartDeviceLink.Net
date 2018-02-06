@@ -9,7 +9,7 @@ namespace SmartDeviceLink.Net.Logging
         void LogError(string message, object obj = null, Exception e = null);
         void LogVerbose(string message, object obj = null);
         void LogDebug(string message, object obj = null);
-        void LogInfo(string message);
-        void LogWarning(string message);
+        void LogInfo(string message, object obj = null);
+        void LogWarning(string message, object obj = null);
     }
 }

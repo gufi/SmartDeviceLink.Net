@@ -43,7 +43,7 @@ namespace SmartDeviceLink.Net.Protocol
         private void ResetDueToError()
         {
 
-            _logger.LogVerbose($"reset: Count {_readBytes.Count} reset from {ByteHandler.GetMethodInfo().Name}");
+            _logger.LogDebug($"reset: Count {_readBytes.Count} reset from {ByteHandler.GetMethodInfo().Name}");
             ByteHandler = StartState;
             lastKnownGoodByte = null;
             if (_readBytes != null && _readBytes.Count > 0)
@@ -99,7 +99,7 @@ namespace SmartDeviceLink.Net.Protocol
                 return;
             }
             packet.FrameType = (FrameType)frameType;
-            _logger.LogVerbose($"Version: {packet.Version} Frame Type: { packet.FrameType}");
+            _logger.LogDebug($"Version: {packet.Version} Frame Type: { packet.FrameType}");
             ByteHandler = ServiceTypeState;
         }
 
@@ -107,7 +107,7 @@ namespace SmartDeviceLink.Net.Protocol
         {
             packet.ServiceType = (ServiceType)(data & 0xFF);
             ByteHandler = ControlFrameInfoState;
-            _logger.LogVerbose($"Service Type: {packet.ServiceType}");
+            _logger.LogDebug($"Service Type: {packet.ServiceType}");
         }
 
         protected virtual void ControlFrameInfoState(byte data)
@@ -172,7 +172,7 @@ namespace SmartDeviceLink.Net.Protocol
         protected virtual void DataSize4State(byte data)
         {
             packet.DataSize |= data;
-            _logger.LogVerbose("DataSize: " + packet.DataSize);
+            _logger.LogDebug("DataSize: " + packet.DataSize);
             switch (packet.FrameType)
             {
                 case FrameType.Consecutive:
@@ -245,7 +245,7 @@ namespace SmartDeviceLink.Net.Protocol
             }
             // sdl_android creates payload buffer here, but that was handled in data size 4
             ByteHandler = DataPumpState;
-            _logger.LogVerbose("MessageId: " + packet.MessageId);
+            _logger.LogDebug("MessageId: " + packet.MessageId);
         }
 
         protected virtual void DataPumpState(byte data)
@@ -254,7 +254,7 @@ namespace SmartDeviceLink.Net.Protocol
             {
                 packet.Payload[packet.DumpSize++] = data;
                 if(packet.DumpSize % 1000 == 10)
-                _logger.LogVerbose($"Recieved Byte {packet.DumpSize} of {packet.Payload.Length}");
+                _logger.LogDebug($"Recieved Byte {packet.DumpSize} of {packet.Payload.Length}");
                 if(packet.DumpSize == packet.Payload.Length)
                     HandlePacket();
             }
