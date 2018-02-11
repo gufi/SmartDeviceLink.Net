@@ -1,6 +1,6 @@
 ﻿namespace SmartDeviceLink.Net.Rpc.BasicCommunication
 {
-    public class Syncmsgversion
+    public class SyncMsgVersion
     {
         public int MajorVersion { get; set; } = 4;
         public int MinorVersion { get; set; } = 0;

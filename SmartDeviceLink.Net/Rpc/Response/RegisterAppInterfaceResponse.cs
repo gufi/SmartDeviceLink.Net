@@ -24,7 +24,7 @@ namespace SmartDeviceLink.Net.Rpc.Response
         public List<string> SpeechCapabilities { get; set; }
         public bool Success { get; set; }
         public List<int> SupportedDiagModes { get; set; }
-        public Syncmsgversion SyncMsgVersion { get; set; }
+        public SyncMsgVersion SyncMsgVersion { get; set; }
         public string SystemSoftwareVersion { get; set; }
         public VehicleType VehicleType { get; set; }
         public List<string> VrCapabilities { get; set; }
